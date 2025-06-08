@@ -136,7 +136,6 @@ const Summary = () => {
             ราบชื่อ
           </h3>
           <GraduateTable></GraduateTable>
-          <GroupedFacultyInput grouped={pageData} />;
         </motion.div>
       </div>
     </>

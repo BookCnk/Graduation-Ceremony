@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getQuotaGroups } from "@/services/graduatesService";
+import { getQuotaGroups, saveQuotaGroups } from "@/services/graduatesService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,6 @@ const DraggableFaculty = ({
     data: { item, groupId },
   });
 
-  // Utility: remove scale from transform string
   const stripScale = (transformStr: string) =>
     transformStr.replace(/scale[XY]?\([^)]+\)/g, "");
 
@@ -86,12 +85,10 @@ const DraggableFaculty = ({
       <div className="flex items-center space-x-2">
         <GripHorizontal className="w-4 h-4 text-gray-400" />
         <span className="text-sm">
-          {item.name}
-          {item.student_count > 0 && (
-            <span className="text-xs text-gray-500 ml-1">
-              ({item.student_count} คน)
-            </span>
-          )}
+          {item.name}{" "}
+          <span className="text-xs text-gray-500">
+            [{item.value}/{item.student_count} คน]
+          </span>
         </span>
       </div>
       <Input
@@ -99,6 +96,7 @@ const DraggableFaculty = ({
         value={item.value}
         onChange={handleValueChange}
         min="0"
+        max={item.student_count > 0 ? item.student_count : undefined}
         className="h-10 rounded-md border px-3 py-2 text-base border-orange-300 text-black w-20 text-right bg-yellow-100"
       />
     </div>
@@ -124,11 +122,20 @@ export const GroupedFacultyInput = () => {
   useEffect(() => {
     getQuotaGroups().then((res) => {
       if (res.status === "success") {
-        const fetchedGroups: Group[] = res.data;
-        const unassignedGroup = fetchedGroups.find((g) =>
+        const raw = JSON.parse(JSON.stringify(res.data)); // ✅ deep clone
+        const updatedGroups: Group[] = raw.map((group: Group) => ({
+          ...group,
+          items: group.items.map((item) => ({
+            ...item,
+            student_count: item.student_count ?? item.value,
+            value: item.value,
+          })),
+        }));
+
+        const unassignedGroup = updatedGroups.find((g) =>
           g.title.includes("ยังไม่ได้จัดรอบ")
         );
-        const assignedGroups = fetchedGroups.filter(
+        const assignedGroups = updatedGroups.filter(
           (g) => g.title !== unassignedGroup?.title
         );
 
@@ -138,19 +145,30 @@ export const GroupedFacultyInput = () => {
     });
   }, []);
 
-  const handleValueChange = (id: number, value: number) => {
-    setUnassigned((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, value } : item))
-    );
-
-    setGroups((prev) =>
-      prev.map((group) => ({
-        ...group,
-        items: group.items.map((item) =>
-          item.id === id ? { ...item, value } : item
-        ),
-      }))
-    );
+  const handleValueChange = (
+    id: number,
+    value: number,
+    scope: "group" | "unassigned",
+    groupTitle?: string
+  ) => {
+    if (scope === "unassigned") {
+      setUnassigned((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, value } : item))
+      );
+    } else if (scope === "group" && groupTitle) {
+      setGroups((prev) =>
+        prev.map((group) =>
+          group.title === groupTitle
+            ? {
+                ...group,
+                items: group.items.map((item) =>
+                  item.id === id ? { ...item, value } : item
+                ),
+              }
+            : group
+        )
+      );
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -165,28 +183,49 @@ export const GroupedFacultyInput = () => {
 
     let movedItem: FacultyItem | undefined;
 
-    const getSourceGroup = (groupId: string) =>
-      groupId === "unassigned" ? unassigned : groups[parseInt(groupId)].items;
+    const fromIndex = groups.findIndex((g) => g.title === fromGroupId);
+    const toIndex = groups.findIndex((g) => g.title === toGroupId);
 
-    movedItem = getSourceGroup(fromGroupId).find((item) => item.id === itemId);
-    if (!movedItem) return;
-
-    // 🔄 Remove item from all places
-    setUnassigned((prev) => prev.filter((i) => i.id !== itemId));
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.filter((i) => i.id !== itemId),
-      }))
-    );
-
-    if (toGroupId === "unassigned") {
-      setUnassigned((prev) => [...prev, movedItem!]);
-    } else {
-      const index = parseInt(toGroupId);
+    if (fromGroupId === "unassigned") {
+      movedItem = unassigned.find((i) => i.id === itemId);
+      if (!movedItem) return;
+      setUnassigned((prev) => prev.filter((i) => i.id !== itemId));
+    } else if (fromIndex >= 0) {
+      movedItem = groups[fromIndex].items.find((i) => i.id === itemId);
+      if (!movedItem) return;
       setGroups((prev) => {
         const updated = [...prev];
-        updated[index].items.push(movedItem!);
+        updated[fromIndex] = {
+          ...updated[fromIndex],
+          items: updated[fromIndex].items.filter((i) => i.id !== itemId),
+        };
+        return updated;
+      });
+    }
+
+    if (!movedItem) return;
+
+    // ✅ ต้องใช้ค่า movedItem ล่าสุดจาก state (ไม่ใช่ clone เก่า)
+    const updatedItem = (() => {
+      if (fromGroupId === "unassigned") {
+        const existing = unassigned.find((i) => i.id === itemId);
+        return existing ? { ...existing } : { ...movedItem! };
+      } else {
+        const g = groups.find((g) => g.title === fromGroupId);
+        const existing = g?.items.find((i) => i.id === itemId);
+        return existing ? { ...existing } : { ...movedItem! };
+      }
+    })();
+
+    if (toGroupId === "unassigned") {
+      setUnassigned((prev) => [...prev, updatedItem]);
+    } else if (toIndex >= 0) {
+      setGroups((prev) => {
+        const updated = [...prev];
+        updated[toIndex] = {
+          ...updated[toIndex],
+          items: [...updated[toIndex].items, updatedItem],
+        };
         return updated;
       });
     }
@@ -194,37 +233,34 @@ export const GroupedFacultyInput = () => {
 
   const handleAddGroup = () => {
     setGroups((prev) => {
-      const newGroup = { title: `รอบที่ ${prev.length + 1}`, items: [] };
+      const newGroup = {
+        title: `รอบที่ ${prev.length + 1}`,
+        items: [],
+      };
       return [...prev, newGroup];
     });
   };
 
   const handleSaveData = async () => {
-    // const payload = groups.map((group, index) => ({
-    //   round_number: index + 1,
-    //   faculties: group.items.map((item) => ({
-    //     id: item.id,
-    //     quota: item.value,
-    //   })),
-    // }));
-    // try {
-    //   const response = await fetch("/api/save-quota-groups", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(payload),
-    //   });
-    //   const result = await response.json();
-    //   if (result.status === "success") {
-    //     alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
-    //   } else {
-    //     alert("❌ บันทึกไม่สำเร็จ");
-    //   }
-    // } catch (error) {
-    //   console.error("❌ Save error:", error);
-    //   alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-    // }
+    const payload: any = groups.map((group, index) => ({
+      round: parseInt(group.title.replace("รอบที่ ", "")),
+      faculties: group.items.map((item) => ({
+        faculty_id: item.id,
+        quota: item.value,
+      })),
+    }));
+
+    try {
+      const result = await saveQuotaGroups(payload);
+      if (result.status === "success") {
+        alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
+      } else {
+        alert("❌ บันทึกไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error("❌ Save error:", error);
+      alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+    }
   };
 
   const handleRemoveGroup = (index: number) => {
@@ -275,26 +311,25 @@ export const GroupedFacultyInput = () => {
                   ลบรอบ
                 </Button>
               </div>
-              <DroppableGroup groupId={index.toString()}>
+              <DroppableGroup groupId={group.title}>
                 <SortableContext
-                  items={group.items.map((i) => `draggable-${index}-${i.id}`)}
-                  strategy={verticalListSortingStrategy}>
-                  {group.items.length > 0 ? (
-                    group.items.map((item) => (
-                      <DraggableFaculty
-                        key={`draggable-${index}-${item.id}`}
-                        item={item}
-                        groupId={index.toString()}
-                        onValueChange={handleValueChange}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-400 italic">
-                      ไม่มีคณะในรอบนี้
-                    </p>
+                  items={group.items.map(
+                    (i) => `draggable-${group.title}-${i.id}`
                   )}
+                  strategy={verticalListSortingStrategy}>
+                  {group.items.map((item) => (
+                    <DraggableFaculty
+                      key={`draggable-${group.title}-${item.id}`}
+                      item={item}
+                      groupId={group.title}
+                      onValueChange={(id, value) =>
+                        handleValueChange(id, value, "group", group.title)
+                      }
+                    />
+                  ))}
                 </SortableContext>
               </DroppableGroup>
+
               {index < groups.length - 1 && <Separator className="my-4" />}
             </div>
           ))}
@@ -314,7 +349,9 @@ export const GroupedFacultyInput = () => {
                     key={`draggable-unassigned-${item.id}`}
                     item={item}
                     groupId="unassigned"
-                    onValueChange={handleValueChange}
+                    onValueChange={(id, value) =>
+                      handleValueChange(id, value, "unassigned")
+                    }
                   />
                 ))}
               </SortableContext>

@@ -16,6 +16,7 @@ import Settings from "./components/Settings";
 import ImportData from "@/components/ImportData";
 import Summary from "@/components/Summary";
 import Dashboard from "@/components/Dashboard"; // path ตามที่คุณจัดโฟลเดอร์
+import NumberDisplay from "@/components/NumberDisplay"; // path ตามที่คุณจัดโฟลเดอร์
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -28,16 +29,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const NumberDisplay = () => {
-  const [currentNumber] = useState(1);
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-9xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
-        {currentNumber}
-      </div>
-    </div>
-  );
-};
+// const NumberDisplay = () => {
+//   const [currentNumber] = useState(1);
+//   return (
+//     <div className="min-h-screen flex items-center justify-center">
+//       <div className="text-9xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+//         {currentNumber}
+//       </div>
+//     </div>
+//   );
+// };
 
 function App() {
   const { user, logout, isTokenExpired } = useAuthStore();

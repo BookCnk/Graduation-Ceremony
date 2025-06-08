@@ -37,11 +37,10 @@ const columns: ColumnDef<any>[] = [
     cell: (info) => info.getValue(),
   },
 ];
-
 interface Faculty {
   id: number;
   name: string;
-  label_th: string;
+  faculty_code: string;
 }
 
 const TablePage = () => {
@@ -86,7 +85,6 @@ const TablePage = () => {
 
   const handleSelectFaculty = (faculty: Faculty) => {
     setSelectedFaculty(faculty);
-    setPageIndex(0);
   };
 
   const table = useReactTable({
@@ -120,7 +118,7 @@ const TablePage = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full justify-between">
-                {selectedFaculty?.label_th ?? "เลือกคณะ"}
+                {selectedFaculty?.name ?? "เลือกคณะ"}
                 <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
