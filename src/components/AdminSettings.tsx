@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getRoundCallSummary } from "@/services/graduatesService";
 
 export function AdminSettings() {
   const [settings, setSettings] = useState({
@@ -7,15 +8,55 @@ export function AdminSettings() {
     endOrder: "100",
   });
 
+  const [summary, setSummary] = useState<null | {
+    current_round: number;
+    total_in_round: number;
+    already_called: number;
+    remaining: number;
+    latest_called_sequence: number | null;
+    total_all_rounds: number;
+  }>(null);
+
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const res: any = await getRoundCallSummary();
+        if (res.status === "success") {
+          setSummary(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch summary:", err);
+      }
+    }
+    fetchSummary();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would save the settings to the backend
     console.log("Settings saved:", settings);
   };
 
   return (
     <>
       <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>
+
+      {/* 🔹 แสดงข้อมูลรอบล่าสุด */}
+      {summary && (
+        <div className="mb-6 bg-gray-100 dark:bg-zinc-900 p-4 rounded-lg shadow-sm">
+          <p className="text-sm font-medium mb-1">🎓 Current Round Summary:</p>
+          <ul className="text-sm pl-4 list-disc">
+            <li>Current Round: {summary.current_round}</li>
+            <li>Total in Round: {summary.total_in_round}</li>
+            <li>Already Called: {summary.already_called}</li>
+            <li>Remaining: {summary.remaining}</li>
+            <li>
+              Latest Called Sequence: {summary.latest_called_sequence ?? "N/A"}
+            </li>
+            <li>Total All Rounds: {summary.total_all_rounds}</li>
+          </ul>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label

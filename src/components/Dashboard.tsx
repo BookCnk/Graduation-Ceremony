@@ -1,9 +1,12 @@
-import { UserCircle, Settings } from "lucide-react";
-import { useState } from "react";
+import { UserCircle, Settings, PackagePlus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { GraduationDisplay } from "@/components/GraduationDisplay";
 import { ProgressTracker } from "@/components/ProgressTracker";
-import { AdminSettings } from "@/components/AdminSettings";
+// import { AdminSettings } from "@/components/AdminSettings";
+import NextGraduatesTable from "@/components/NextGraduatesTable";
 import { GroupedFacultyInput } from "@/components/GroupedFacultyInput";
+import FormAddData from "@/components/FormAddData";
+// import { setGraduateAsReceived } from "@/services/graduatesService";
 
 interface DashboardMainProps {
   currentGraduate: {
@@ -19,14 +22,19 @@ interface DashboardMainProps {
   handleNextGraduate: () => void;
 }
 
-const DashboardMain: React.FC<DashboardMainProps> = ({
-  currentGraduate,
-  progress,
-  handleNextGraduate,
-}) => {
-  const [activeTab, setActiveTab] = useState<"graduates" | "rounds">(
-    "graduates"
-  );
+const DashboardMain: React.FC<DashboardMainProps> = (
+  {
+    // currentGraduate,
+    // progress,
+    // handleNextGraduate,
+  }
+) => {
+  const [activeTab, setActiveTab] = useState<
+    "graduates" | "rounds" | "adddata"
+  >("graduates");
+  const [isUpdate, setIsupdate] = useState<number>(0);
+
+  useEffect(() => {}, [isUpdate]);
 
   const pageData = [
     {
@@ -70,18 +78,29 @@ const DashboardMain: React.FC<DashboardMainProps> = ({
           <Settings className="w-5 h-5" />
           <span>ตั้งค่าจำนวนบัณฑิตและรอบ</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab("adddata")}
+          className={`px-4 py-2 flex items-center space-x-2 ${
+            activeTab === "adddata"
+              ? "text-orange-600 border-b-2 border-orange-500"
+              : "text-gray-600 hover:text-orange-600"
+          }`}>
+          <PackagePlus className="w-5 h-5" />
+          <span>หน้าเพิ่มข้อมูล</span>
+        </button>
       </div>
 
       {/* ✅ ตรงนี้คือส่วนที่เปลี่ยนตามแท็บ */}
       {activeTab === "graduates" && (
         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
-          <GraduationDisplay graduate={currentGraduate} />
+          <GraduationDisplay onClick={() => setIsupdate(Math.random())} />
           <div className="mt-6 flex justify-center">
-            <button
+            {/* <button
               onClick={handleNextGraduate}
               className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
               เรียกบัณฑิตคนถัดไป
-            </button>
+            </button> */}
           </div>
         </div>
       )}
@@ -92,35 +111,42 @@ const DashboardMain: React.FC<DashboardMainProps> = ({
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="mt-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
-              <GraduationDisplay graduate={currentGraduate} />
-            </div>
-          </div>
-          <div>
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
-              <ProgressTracker progress={progress} />
-            </div>
-          </div>
+      {activeTab === "adddata" && (
+        <div>
+          <FormAddData />;
         </div>
+      )}
 
-        <div className="mt-8">
+      {activeTab === "graduates" && (
+        <div className="mt-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
+                <NextGraduatesTable isUpdate={isUpdate} />
+              </div>
+            </div>
+            <div>
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
+                <ProgressTracker isUpdate={isUpdate} />
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="mt-8">
           <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
             <AdminSettings />
           </div>
-        </div>
+        </div> */}
 
-        <div className="mt-8 flex justify-center">
+          {/* <div className="mt-8 flex justify-center">
           <button
             onClick={handleNextGraduate}
             className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
             เรียกบัณฑิตคนถัดไป
           </button>
+        </div> */}
         </div>
-      </div>
+      )}
     </>
   );
 };
