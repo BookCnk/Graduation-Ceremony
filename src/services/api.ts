@@ -59,5 +59,24 @@ export const getAllUser = async (): Promise<LoginResponse> => {
   return await res.json();
 };
 
+export const changePassword = async (payload: any): Promise<any> => {
+  const res = await fetch(`${BASE_URL}/auth/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
 
+  if (!res.ok) {
+    throw new Error(`Fetch failed: ${res.status}`);
+  }
 
+  const json = await res.json();
+
+  if (json.status === "error") {
+    throw new Error(json.message || "Something went wrong");
+  }
+
+  return json;
+};

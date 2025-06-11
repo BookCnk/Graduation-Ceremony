@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthStore } from "@/stores/authStore";
 
-import { getAllUser } from "@/services/api";
+import { getAllUser, register, changePassword } from "@/services/api";
 
 interface User {
   id: number;
@@ -30,6 +30,13 @@ interface User {
 }
 
 const Settings = () => {
+  const [newUsername, setNewUsername] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("user");
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [activeTab, setActiveTab] = useState<"users" | "add" | "password">(
     "users"
   );
@@ -39,7 +46,8 @@ const Settings = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const userFromToken: any = useAuthStore((state) => state.user);
+  console.log(userFromToken);
 
   // Change Password
   const [currentPassword, setCurrentPassword] = useState("");
@@ -49,30 +57,84 @@ const Settings = () => {
   const passwordsMatch =
     newPassword === confirmPassword && newPassword.length > 0;
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await getAllUser();
-        if (res.status === "success" && Array.isArray(res.data)) {
-          const mappedUsers = res.data.map((user: any) => ({
-            id: user.id,
-            username: user.name,
-            role: user.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน",
-            lastLogin: user.last_login,
-          }));
-          setUsers(mappedUsers);
-        } else {
-          setError("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้");
-        }
-      } catch (err) {
-        setError("ไม่สามารถเชื่อมต่อ API ได้");
-      } finally {
-        setLoading(false);
+  const fetchUsers = async () => {
+    try {
+      const res = await getAllUser();
+      if (res.status === "success" && Array.isArray(res.data)) {
+        const mappedUsers = res.data.map((user: any) => ({
+          id: user.id,
+          username: user.name,
+          role: user.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน",
+          lastLogin: user.last_login,
+        }));
+        setUsers(mappedUsers);
+      } else {
+        setError("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้");
       }
-    };
+    } catch (err) {
+      setError("ไม่สามารถเชื่อมต่อ API ได้");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddUserError(null);
+    setAddUserLoading(true);
+
+    try {
+      const response = await register({
+        name: newUsername,
+        password: newUserPassword,
+        role: newUserRole,
+      });
+
+      if (response.status === "success") {
+        setNewUsername("");
+        setNewUserPassword("");
+        setNewUserRole("user");
+        setActiveTab("users"); // Go back to users tab
+      } else {
+        setAddUserError(response.message || "ไม่สามารถเพิ่มผู้ใช้ได้");
+      }
+    } catch (error) {
+      setAddUserError("เกิดข้อผิดพลาดในการเชื่อมต่อ API");
+    } finally {
+      setAddUserLoading(false);
+      await fetchUsers();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!passwordsMatch) {
+      setErrorMessage("รหัสผ่านไม่ตรงกัน");
+      return;
+    }
+
+    try {
+      const res = await changePassword({
+        name: userFromToken.name,
+        oldPassword: currentPassword,
+        newPassword: newPassword,
+      });
+
+      console.log("✅ เปลี่ยนรหัสผ่านสำเร็จ:", res.message || res);
+      setErrorMessage(""); // ล้างข้อความ error ถ้าเปลี่ยนสำเร็จ
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setErrorMessage(err.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+    }
+  };
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
@@ -104,7 +166,7 @@ const Settings = () => {
           <Users className="w-5 h-5" />
           <span>รายชื่อผู้ใช้งาน</span>
         </button>
-        {user?.role === "admin" && (
+        {userFromToken?.role === "admin" && (
           <button
             onClick={() => setActiveTab("add")}
             className={`px-4 py-2 flex items-center space-x-2 ${
@@ -171,11 +233,11 @@ const Settings = () => {
                           <td className="py-3 px-4">{user.role}</td>
                           <td className="py-3 px-4">{user.lastLogin}</td>
                           <td className="py-3 px-4 text-right">
-                            {user?.role === "ผู้ดูแลระบบ" && (
+                            {userFromToken?.role === "admin" && (
                               <>
                                 <button
                                   onClick={() => handleEdit(user)}
-                                  className="text-orange-600 hover:text-orange-700 p-2">
+                                  className="text-orange-600 hover:text-orange-70 0 p-2">
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
@@ -273,11 +335,13 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleAddUser}>
                 <div className="space-y-2">
                   <Label htmlFor="username">ชื่อผู้ใช้</Label>
                   <Input
                     id="username"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
                     placeholder="กรอกชื่อผู้ใช้"
                     className="border-orange-200 focus:border-orange-500"
                   />
@@ -287,6 +351,8 @@ const Settings = () => {
                   <Input
                     id="password"
                     type="password"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
                     placeholder="กรอกรหัสผ่าน"
                     className="border-orange-200 focus:border-orange-500"
                   />
@@ -295,15 +361,21 @@ const Settings = () => {
                   <Label htmlFor="role">บทบาท</Label>
                   <select
                     id="role"
+                    value={newUserRole}
+                    onChange={(e) => setNewUserRole(e.target.value)}
                     className="w-full p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none">
                     <option value="user">ผู้ใช้งาน</option>
                     <option value="admin">ผู้ดูแลระบบ</option>
                   </select>
                 </div>
+                {addUserError && (
+                  <p className="text-red-500 text-sm">{addUserError}</p>
+                )}
                 <Button
                   type="submit"
+                  disabled={addUserLoading}
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
-                  เพิ่มผู้ใช้งาน
+                  {addUserLoading ? "กำลังเพิ่ม..." : "เพิ่มผู้ใช้งาน"}
                 </Button>
               </form>
             </CardContent>
@@ -320,7 +392,7 @@ const Settings = () => {
               <CardDescription>เปลี่ยนรหัสผ่านของคุณ</CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="current-password">รหัสผ่านปัจจุบัน</Label>
                   <Input
@@ -366,6 +438,12 @@ const Settings = () => {
                   เปลี่ยนรหัสผ่าน
                 </Button>
               </form>
+
+              {errorMessage && (
+                <p className="text-sm text-red-500 text-center">
+                  {errorMessage}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
