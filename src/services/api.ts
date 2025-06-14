@@ -3,6 +3,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 export interface LoginPayload {
   name: string;
   password: string;
+  role: string;
 }
 
 export interface LoginResponse {

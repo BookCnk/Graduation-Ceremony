@@ -8,9 +8,6 @@ import {
   BarChart,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore"; // ✅ Update path if needed
-import { GraduationDisplay } from "./components/GraduationDisplay";
-import { ProgressTracker } from "./components/ProgressTracker";
-import { AdminSettings } from "./components/AdminSettings";
 import Login from "./components/Login";
 import Settings from "./components/Settings";
 import ImportData from "@/components/ImportData";

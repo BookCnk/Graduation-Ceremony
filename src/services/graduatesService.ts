@@ -122,6 +122,7 @@ export const getFirstGraduateNotReceived = async (): Promise<{
     last_name: string;
     sequence: number;
     degree_name: string;
+    faculty_name: string;
     round_number: number;
   } | null;
 }> => {

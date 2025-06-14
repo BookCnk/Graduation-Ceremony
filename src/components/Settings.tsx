@@ -126,7 +126,7 @@ const Settings = () => {
       });
 
       console.log("✅ เปลี่ยนรหัสผ่านสำเร็จ:", res.message || res);
-      setErrorMessage(""); // ล้างข้อความ error ถ้าเปลี่ยนสำเร็จ
+      setErrorMessage("");
 
       setCurrentPassword("");
       setNewPassword("");
@@ -144,12 +144,6 @@ const Settings = () => {
   const handleDelete = (user: User) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    // TODO: Implement delete user functionality
-    console.log("Deleting user:", selectedUser);
-    setIsDeleteDialogOpen(false);
   };
 
   return (
