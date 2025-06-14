@@ -7,12 +7,12 @@ RUN npm ci --silent
 
 COPY . .
 RUN npm run build                  
-FROM nginx:1.27-alpine            # super-small, stable web server
+FROM nginx:1.27-alpine            
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/app.conf
 
 # Copy compiled static files to Nginx public folder
-COPY --from=builder /app/build /usr/share/nginx/html   # Change to /app/dist if Vite
+COPY --from=builder /app/build /usr/share/nginx/html   
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
