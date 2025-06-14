@@ -15,7 +15,7 @@ jobs:
 
       - name: Sync environment
         run: |
-          cat > .env-prod << EOF
+          cat > .env << EOF
           VITE_API_URL=${{ secrets.VITE_API_URL }} 
           EOF
 
