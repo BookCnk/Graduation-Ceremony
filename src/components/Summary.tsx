@@ -33,24 +33,6 @@ const studentInfo = {
   name: "กิตติศักดิ์ อำนวยการ",
   faculty: "คณะวิทยาศาสตร์",
 };
-import { GroupedFacultyInput } from "@/components/GroupedFacultyInput";
-
-const pageData = [
-  {
-    title: "รอบที่ 1",
-    items: [
-      { id: 1, name: "คณะวิศวกรรมศาสตร์", value: 30 },
-      { id: 2, name: "คณะวิทยาศาสตร์", value: 60 },
-    ],
-  },
-  {
-    title: "คณะที่ยังไม่ได้จัดรอบ",
-    items: [
-      { id: 3, name: "คณะครุศาสตร์อุตสาหกรรมและเทคโนโลยี", value: 0 },
-      { id: 4, name: "คณะเทคโนโลยีสารสนเทศ", value: 0 },
-    ],
-  },
-];
 
 // Count-up animation component
 const AnimatedNumber = ({ value }: { value: number }) => {
@@ -59,10 +41,7 @@ const AnimatedNumber = ({ value }: { value: number }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}>
-      <motion.span
-        initial={{ count: 0 }}
-        animate={{ count: value }}
-        transition={{ duration: 1.2, ease: "easeOut" }}>
+      <motion.span transition={{ duration: 1.2, ease: "easeOut" }}>
         {Math.floor(value)}
       </motion.span>
     </motion.span>

@@ -3,7 +3,6 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 export interface LoginPayload {
   name: string;
   password: string;
-  role: string;
 }
 
 export interface LoginResponse {
@@ -32,7 +31,7 @@ export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
 };
 
 export const register = async (
-  payload: LoginPayload
+  payload: any
 ): Promise<LoginResponse> => {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",

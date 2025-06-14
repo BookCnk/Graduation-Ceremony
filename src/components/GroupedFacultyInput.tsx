@@ -242,7 +242,7 @@ export const GroupedFacultyInput = () => {
   };
 
   const handleSaveData = async () => {
-    const payload: any = groups.map((group, index) => ({
+    const payload: any = groups.map((group) => ({
       round: parseInt(group.title.replace("รอบที่ ", "")),
       faculties: group.items.map((item) => ({
         faculty_id: item.id,

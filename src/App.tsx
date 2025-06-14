@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // };
 
 function App() {
-  const { user, logout, isTokenExpired } = useAuthStore();
+  const { logout, isTokenExpired } = useAuthStore();
 
   useEffect(() => {
     if (isTokenExpired()) {
@@ -46,11 +46,11 @@ function App() {
     }
   }, [isTokenExpired, logout]);
 
-  const [currentGraduate, setCurrentGraduate] = useState({
+  const currentGraduate = {
     name: "John Doe",
     order: 1,
     faculty: "Engineering",
-  });
+  };
 
   const [progress, setProgress] = useState({
     total: 100,

@@ -36,23 +36,6 @@ const DashboardMain: React.FC<DashboardMainProps> = (
 
   useEffect(() => {}, [isUpdate]);
 
-  const pageData = [
-    {
-      title: "รอบที่ 1",
-      items: [
-        { id: 1, name: "คณะวิศวกรรมศาสตร์", value: 30 },
-        { id: 2, name: "คณะวิทยาศาสตร์", value: 60 },
-      ],
-    },
-    {
-      title: "คณะที่ยังไม่ได้จัดรอบ",
-      items: [
-        { id: 3, name: "คณะครุศาสตร์อุตสาหกรรมและเทคโนโลยี", value: 0 },
-        { id: 4, name: "คณะเทคโนโลยีสารสนเทศ", value: 0 },
-      ],
-    },
-  ];
-
   return (
     <>
       {/* Tab Navigation */}
