@@ -197,3 +197,19 @@ export const setGraduateAsReceived = async (id: number) => {
   if (!res.ok) throw new Error("Failed to update graduate status");
   return await res.json();
 };
+
+export const resetReceivedCards = async (): Promise<{
+  status: string;
+  message?: string;
+  data?: { success: boolean };
+}> => {
+  const res = await fetch(`${BASE_URL}/reset-cards`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return await res.json();
+};

@@ -1,101 +1,97 @@
-// import { useEffect, useState } from "react";
-// import { getQuotaGroups, saveQuotaGroups } from "@/services/graduatesService";
-// import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
-// import { Separator } from "@/components/ui/separator";
-
-// interface QuotaItem {
-//   faculty_id: number;
-//   faculty_name: string;
-//   round_number: number | null;
-//   quota: number;
-// }
+import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { resetReceivedCards } from "@/services/graduatesService";
 
 const FormAddData = () => {
-  //   const [groups, setGroups] = useState<QuotaItem[]>([]);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
-  //   useEffect(() => {
-  //     const fetchQuota = async () => {
-  //       try {
-  //         const res: any = await getQuotaGroups();
-  //         if (res.status === "success" && Array.isArray(res.data)) {
-  //           setGroups(res.data);
-  //         } else {
-  //           alert("ไม่สามารถโหลดข้อมูลรอบบัณฑิตได้");
-  //         }
-  //       } catch (err) {
-  //         console.error("❌ โหลดข้อมูลล้มเหลว:", err);
-  //         alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
-  //       }
-  //     };
+  /** เรียก API รีเซ็ต แล้วปิด Dialog */
+  const handleConfirmReset = async () => {
+    try {
+      await resetReceivedCards(); // GET /reset-cards
+      // 🔄 refresh data here (ถ้ามี)
+    } catch (err) {
+      console.error("❌ resetReceivedCards error:", err);
+    } finally {
+      setIsResetDialogOpen(false);
+    }
+  };
 
-  //     fetchQuota();
-  //   }, []);
+  return (
+    <>
+      {/* 🔹 Reset Confirmation Dialog */}
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ยืนยันการรีเซ็ตค่ารับปริญญา</DialogTitle>
+            <DialogDescription>
+              คุณต้องการรีเซ็ตสถานะ “รับบัตร” ของบัณฑิตทั้งหมดใช่หรือไม่?
+              <br />
+              การกระทำนี้ไม่สามารถย้อนกลับได้
+            </DialogDescription>
+          </DialogHeader>
 
-  return <></>;
-  // return (
-  //   <>
-  // {
-  /* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white shadow-xl border border-orange-100">
-          <CardHeader>
-            <CardTitle className="text-orange-600">ชื่อคณะ</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input placeholder="กรอกชื่อคณะ..." />
-            <div className="pt-4 text-right">
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                บันทึก
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsResetDialogOpen(false)}>
+              ยกเลิก
+            </Button>
 
-        <Card className="bg-white shadow-xl border border-orange-100">
-          <CardHeader>
-            <CardTitle className="text-orange-600">ปีหลักสูตร</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input placeholder="กรอกปีหลักสูตร..." />
-            <div className="pt-4 text-right">
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                บันทึก
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <Button
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              onClick={handleConfirmReset}>
+              ยืนยันรีเซ็ต
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <Card className="bg-white shadow-xl border border-orange-100">
-          <CardHeader>
-            <CardTitle className="text-orange-600">ชื่อสาขา</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input placeholder="กรอกชื่อสาขา..." />
-            <div className="pt-4 text-right">
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                บันทึก
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 🔹 Main Card */}
+      <Card className="bg-white shadow-xl border border-orange-100">
+        {/* --- Section: Reset Button --- */}
+        <CardHeader>
+          <CardTitle className="text-orange-600">รีเซ็ตค่ารับปริญญา</CardTitle>
+        </CardHeader>
 
-        <Card className="bg-white shadow-xl border border-orange-100">
-          <CardHeader>
-            <CardTitle className="text-orange-600">ระดับปริญญา</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input placeholder="กรอกระดับปริญญา..." />
-            <div className="pt-4 text-right">
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                บันทึก
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div> */
+        <CardContent>
+          <div className="pt-4">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => setIsResetDialogOpen(true)} // เปิด Dialog
+            >
+              รีเซ็ตค่ารับปริญญา
+            </Button>
+          </div>
+        </CardContent>
+
+        {/* --- Section: Faculty Name Input --- */}
+        <CardHeader>
+          <CardTitle className="text-orange-600">ชื่อคณะ</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <Input placeholder="กรอกชื่อคณะ..." />
+
+          <div className="pt-4 text-right">
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white">
+              บันทึก
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  );
 };
-//     </>
-//   );
 
 export default FormAddData;

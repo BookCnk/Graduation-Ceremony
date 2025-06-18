@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   getFirstGraduateNotReceived,
   setGraduateAsReceived,
@@ -11,6 +11,7 @@ interface Graduate {
   faculty: string;
   round: number;
 }
+
 interface GraduateProps {
   onClick: () => void;
 }
@@ -19,7 +20,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
   const [graduate, setGraduate] = useState<Graduate | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchGraduate = async () => {
+  const fetchGraduate = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getFirstGraduateNotReceived();
@@ -50,23 +51,34 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleNextGraduate = async () => {
+  const handleNextGraduate = useCallback(async () => {
     if (!graduate) return;
-
     try {
+      console.log("✅ Handling next graduate:", graduate.id);
       await setGraduateAsReceived(graduate.id);
-      await fetchGraduate(); 
-      onClick();// โหลดบัณฑิตคนใหม่
+      await fetchGraduate();
+      onClick(); // Trigger parent callback (if needed)
     } catch (err) {
       console.error("❌ อัปเดตสถานะบัณฑิตล้มเหลว:", err);
     }
-  };
+  }, [graduate, fetchGraduate, onClick]);
 
   useEffect(() => {
     fetchGraduate();
-  }, []);
+  }, [fetchGraduate]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        handleNextGraduate();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleNextGraduate]);
 
   return (
     <>
@@ -79,6 +91,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
           <h2 className="text-2xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
             ข้อมูลบัณฑิตปัจจุบัน
           </h2>
+
           <div className="space-y-6">
             <div>
               <label className="block text-sm text-gray-500 mb-1">
@@ -88,6 +101,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
                 {graduate.name}
               </p>
             </div>
+
             <div>
               <label className="block text-sm text-gray-500 mb-1">
                 รอบและลำดับ
@@ -96,6 +110,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
                 รอบ {graduate.round} ลำดับที่ {graduate.order}
               </p>
             </div>
+
             <div>
               <label className="block text-sm text-gray-500 mb-1">
                 สาขา/คณะ
@@ -108,6 +123,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
 
           <div className="mt-6 flex justify-center">
             <button
+              type="button"
               onClick={handleNextGraduate}
               className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
               เรียกบัณฑิตคนถัดไป
