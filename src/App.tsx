@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
   const location = useLocation();
 
-  if (!user) {
+  if (!user && location.pathname !== "/number") {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -69,6 +69,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/number" element={<NumberDisplay />} />
+
       <Route
         path="/*"
         element={
@@ -142,7 +144,6 @@ function App() {
                       />
                     }
                   />
-                  <Route path="/number" element={<NumberDisplay />} />
                   <Route path="/import" element={<ImportData />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/summary" element={<Summary />} />
