@@ -10,7 +10,7 @@ interface SummaryData {
   total_all_rounds: number;
 }
 interface Props {
-  isUpdate: number;
+  isUpdate: number; // เปลี่ยนค่านี้จาก parent เพื่อบังคับรีเฟรช
 }
 
 export function ProgressTracker({ isUpdate }: Props) {
@@ -32,19 +32,17 @@ export function ProgressTracker({ isUpdate }: Props) {
           });
         }
       } catch (err) {
-        console.error("❌ Failed to fetch round summary:", err);
+        console.error("❌ ไม่สามารถดึงสรุปผลรอบได้:", err);
       } finally {
         setLoading(false);
       }
     }
-
     fetchData();
   }, [isUpdate]);
 
   if (loading)
-    return <p className="text-sm text-muted-foreground">Loading progress...</p>;
-  if (!summary)
-    return <p className="text-sm text-red-500">No data available.</p>;
+    return <p className="text-sm text-muted-foreground">กำลังโหลดสถานะ…</p>;
+  if (!summary) return <p className="text-sm text-red-500">ไม่มีข้อมูล</p>;
 
   const percentage = summary.total_in_round
     ? Math.round((summary.already_called / summary.total_in_round) * 100)
@@ -52,13 +50,14 @@ export function ProgressTracker({ isUpdate }: Props) {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Ceremony Progress</h2>
+      <h2 className="text-xl font-semibold mb-4">ความคืบหน้าพิธีมอบปริญญา</h2>
 
       <div className="space-y-4">
+        {/* แถบ Progress */}
         <div>
           <div className="flex justify-between mb-2">
             <span className="text-sm text-muted-foreground">
-              Round {summary.current_round} Progress
+              ความคืบหน้ารอบที่&nbsp;{summary.current_round}
             </span>
             <span className="text-sm font-medium">{percentage}%</span>
           </div>
@@ -70,18 +69,19 @@ export function ProgressTracker({ isUpdate }: Props) {
           </div>
         </div>
 
+        {/* ตัวเลขสรุป */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold">{summary.total_in_round}</p>
-            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="text-sm text-muted-foreground">ทั้งหมด</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{summary.already_called}</p>
-            <p className="text-sm text-muted-foreground">Called</p>
+            <p className="text-sm text-muted-foreground">เรียกแล้ว</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{summary.remaining}</p>
-            <p className="text-sm text-muted-foreground">Remaining</p>
+            <p className="text-sm text-muted-foreground">คงเหลือ</p>
           </div>
         </div>
       </div>

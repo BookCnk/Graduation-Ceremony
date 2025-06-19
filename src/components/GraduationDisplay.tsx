@@ -3,6 +3,7 @@ import {
   getFirstGraduateNotReceived,
   setGraduateAsReceived,
 } from "@/services/graduatesService";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Graduate {
   id: number;
@@ -20,9 +21,9 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
   const [graduate, setGraduate] = useState<Graduate | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchGraduate = useCallback(async () => {
+  const fetchGraduate = useCallback(async (showSpinner = false) => {
     try {
-      setLoading(true);
+      if (showSpinner) setLoading(true);
       const res = await getFirstGraduateNotReceived();
       if (res.status === "success" && res.data) {
         const {
@@ -49,25 +50,24 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
     } catch (err) {
       console.error("❌ โหลดข้อมูลไม่สำเร็จ:", err);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchGraduate(true); // เรียกครั้งแรกแสดง loading
+  }, [fetchGraduate]);
 
   const handleNextGraduate = useCallback(async () => {
     if (!graduate) return;
     try {
-      console.log("✅ Handling next graduate:", graduate.id);
       await setGraduateAsReceived(graduate.id);
-      await fetchGraduate();
-      onClick(); // Trigger parent callback (if needed)
+      await fetchGraduate(); // ไม่โชว์ loading overlay
+      onClick();
     } catch (err) {
       console.error("❌ อัปเดตสถานะบัณฑิตล้มเหลว:", err);
     }
   }, [graduate, fetchGraduate, onClick]);
-
-  useEffect(() => {
-    fetchGraduate();
-  }, [fetchGraduate]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -80,19 +80,32 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleNextGraduate]);
 
-  return (
-    <>
-      {loading ? (
-        <p className="text-orange-600 text-lg text-center animate-pulse">
-          กำลังโหลดข้อมูล...
-        </p>
-      ) : graduate ? (
-        <>
-          <h2 className="text-2xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
-            ข้อมูลบัณฑิตปัจจุบัน
-          </h2>
+  if (!graduate && !loading) {
+    return <p className="text-red-600 text-center">ไม่พบข้อมูลบัณฑิต</p>;
+  }
 
-          <div className="space-y-6">
+  return (
+    <div className="relative">
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
+          <p className="text-orange-600 animate-pulse">กำลังโหลด...</p>
+        </div>
+      )}
+
+      <AnimatePresence mode="wait">
+        {graduate && (
+          <motion.div
+            key={graduate.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6 relative z-0">
+            <h2 className="text-2xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
+              ข้อมูลบัณฑิตปัจจุบัน
+            </h2>
+
             <div>
               <label className="block text-sm text-gray-500 mb-1">
                 ชื่อ-สกุล
@@ -119,20 +132,18 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
                 {graduate.faculty}
               </p>
             </div>
-          </div>
 
-          <div className="mt-6 flex justify-center">
-            <button
-              type="button"
-              onClick={handleNextGraduate}
-              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
-              เรียกบัณฑิตคนถัดไป
-            </button>
-          </div>
-        </>
-      ) : (
-        <p className="text-red-600 text-center">ไม่พบข้อมูลบัณฑิต</p>
-      )}
-    </>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={handleNextGraduate}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
+                เรียกบัณฑิตคนถัดไป (Space)
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

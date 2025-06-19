@@ -100,6 +100,7 @@ function App() {
                       </Link>
                       <Link
                         to="/number"
+                        target="_blank"
                         className="px-4 py-2 rounded-lg hover:bg-orange-50 text-gray-700 hover:text-orange-600 transition-colors flex items-center">
                         <Hash className="w-4 h-4 mr-2" />
                         แสดงตัวเลข

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+/* GroupedFacultyInput.tsx */
+import { useEffect, useRef, useState, useCallback } from "react";
 import { getQuotaGroups, saveQuotaGroups } from "@/services/graduatesService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,35 +21,56 @@ import {
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
+/* ---------- helpers ---------- */
+const clamp = (n: number, min: number, max: number) =>
+  Math.max(min, Math.min(n, max));
+function uniqByIdMax<T extends { id: number; student_count: number }>(
+  arr: T[]
+) {
+  return [
+    ...arr
+      .reduce((m, cur) => {
+        const prev = m.get(cur.id);
+        if (!prev || cur.student_count > prev.student_count) m.set(cur.id, cur);
+        return m;
+      }, new Map<number, T>())
+      .values(),
+  ];
+}
+const parseRoundNo = (title: string) =>
+  parseInt(title.replace(/[^\d]/g, ""), 10) || 0;
+
+/* ---------- types ---------- */
 interface FacultyItem {
   id: number;
   name: string;
   value: number;
   student_count: number;
 }
-
 interface Group {
-  title: string;
+  round: number; // หมายเลขรอบถาวร
+  title: string; // “รอบที่ X” เอาไว้แสดง
   items: FacultyItem[];
 }
 
+/* ---------- DraggableFaculty ---------- */
 const DraggableFaculty = ({
   item,
   groupId,
+  maxAllowed,
   onValueChange,
 }: {
   item: FacultyItem;
   groupId: string;
+  maxAllowed: number;
   onValueChange: (id: number, value: number) => void;
 }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: `draggable-${groupId}-${item.id}`,
-    data: { item, groupId },
-  });
-
-  const stripScale = (transformStr: string) =>
-    transformStr.replace(/scale[XY]?\([^)]+\)/g, "");
-
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform } =
+    useDraggable({
+      id: `draggable-${groupId}-${item.id}`,
+      data: { item, groupId },
+    });
+  const stripScale = (t: string) => t.replace(/scale[XY]?\([^)]+\)/g, "");
   const style = {
     ...(transform
       ? {
@@ -59,31 +81,23 @@ const DraggableFaculty = ({
           backgroundColor: "#fffbea",
           pointerEvents: "none" as const,
         }
-      : {
-          zIndex: "auto",
-          pointerEvents: "auto" as const,
-        }),
-    height: "48px",
-    width: "100%",
-    boxSizing: "border-box" as const,
-    lineHeight: "1.5rem",
-    transition: "none",
+      : {}),
+    height: 48,
   } as const;
-
-  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(0, parseInt(e.target.value) || 0);
-    onValueChange(item.id, value);
-  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="flex items-center justify-between p-3 bg-muted rounded-md border border-gray-200 mb-2 shadow-sm">
-      <div className="flex items-center space-x-2">
-        <GripHorizontal className="w-4 h-4 text-gray-400" />
+      className="flex items-center justify-between p-3 bg-muted border rounded-md mb-2 shadow-sm">
+      <div className="flex items-center gap-2">
+        <span
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing flex items-center">
+          <GripHorizontal className="w-4 h-4 text-gray-400" />
+        </span>
         <span className="text-sm">
           {item.name}{" "}
           <span className="text-xs text-gray-500">
@@ -91,18 +105,22 @@ const DraggableFaculty = ({
           </span>
         </span>
       </div>
+
       <Input
         type="number"
+        min={0}
+        max={maxAllowed}
         value={item.value}
-        onChange={handleValueChange}
-        min="0"
-        max={item.student_count > 0 ? item.student_count : undefined}
-        className="h-10 rounded-md border px-3 py-2 text-base border-orange-300 text-black w-20 text-right bg-yellow-100"
+        onChange={(e) =>
+          onValueChange(item.id, clamp(+e.target.value || 0, 0, maxAllowed))
+        }
+        className="h-10 w-20 text-right bg-yellow-100 border-orange-300"
       />
     </div>
   );
 };
 
+/* ---------- DroppableGroup ---------- */
 const DroppableGroup = ({
   children,
   groupId,
@@ -114,164 +132,214 @@ const DroppableGroup = ({
   return <div ref={setNodeRef}>{children}</div>;
 };
 
+/* ---------- main component ---------- */
 export const GroupedFacultyInput = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [unassigned, setUnassigned] = useState<FacultyItem[]>([]);
-  const sensors = useSensors(useSensor(PointerSensor));
+  const allFacultiesRef = useRef<FacultyItem[]>([]);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
-  useEffect(() => {
-    getQuotaGroups().then((res) => {
-      if (res.status === "success") {
-        const raw = JSON.parse(JSON.stringify(res.data)); // ✅ deep clone
-        const updatedGroups: Group[] = raw.map((group: Group) => ({
-          ...group,
-          items: group.items.map((item) => ({
-            ...item,
-            student_count: item.student_count ?? item.value,
-            value: item.value,
-          })),
-        }));
+  /* ----- recalc unassigned ----- */
+  const recalcUnassigned = (latest: Group[]) => {
+    const allocated: Record<number, number> = {};
+    latest.forEach((g) =>
+      g.items.forEach((i) => {
+        allocated[i.id] = (allocated[i.id] || 0) + i.value;
+      })
+    );
 
-        const unassignedGroup = updatedGroups.find((g) =>
-          g.title.includes("ยังไม่ได้จัดรอบ")
-        );
-        const assignedGroups = updatedGroups.filter(
-          (g) => g.title !== unassignedGroup?.title
-        );
+    const newUA = allFacultiesRef.current
+      .map((f) => ({
+        ...f,
+        value: f.student_count - (allocated[f.id] || 0),
+      }))
+      .filter((f) => f.value > 0 || f.student_count === 0);
 
-        setGroups(assignedGroups);
-        setUnassigned(unassignedGroup?.items || []);
-      }
-    });
+    setUnassigned(newUA);
+  };
+
+  const fetchData = useCallback(async () => {
+    const res = await getQuotaGroups();
+    if (res.status !== "success") return;
+
+    const raw = res.data as { title: string; items: FacultyItem[] }[];
+
+    const mapped: Group[] = raw.map((g) => ({
+      round: parseRoundNo(g.title),
+      title: g.title,
+      items: g.items.map((it) => ({
+        ...it,
+        student_count: it.student_count ?? it.value,
+        value: it.value,
+      })),
+    }));
+
+    const ua = mapped.find((g) => g.title.includes("ยังไม่ได้จัดรอบ"));
+    const assigned = mapped.filter((g) => g !== ua);
+
+    setGroups(assigned);
+    allFacultiesRef.current = uniqByIdMax([
+      ...assigned.flatMap((g) => g.items),
+      ...(ua?.items || []),
+    ]);
+
+    recalcUnassigned(assigned);
   }, []);
 
+  /* ----- initial fetch ----- */
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  /* ----- change quota ----- */
   const handleValueChange = (
     id: number,
     value: number,
     scope: "group" | "unassigned",
-    groupTitle?: string
+    round?: number
   ) => {
     if (scope === "unassigned") {
       setUnassigned((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, value } : item))
+        prev.map((it) => (it.id === id ? { ...it, value } : it))
       );
-    } else if (scope === "group" && groupTitle) {
-      setGroups((prev) =>
-        prev.map((group) =>
-          group.title === groupTitle
+    } else if (round !== undefined) {
+      setGroups((prev) => {
+        const updated = prev.map((g) =>
+          g.round === round
             ? {
-                ...group,
-                items: group.items.map((item) =>
-                  item.id === id ? { ...item, value } : item
+                ...g,
+                items: g.items.map((it) =>
+                  it.id === id ? { ...it, value } : it
                 ),
               }
-            : group
-        )
-      );
+            : g
+        );
+        recalcUnassigned(updated);
+        return updated;
+      });
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  /* ----- drag end ----- */
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over) return;
 
-    const [_, fromGroupId, itemIdStr] = active.id.toString().split("-");
-    const toGroupId = over.id.toString();
-    const itemId = parseInt(itemIdStr);
+    const [_, from, idStr] = active.id.toString().split("-");
+    const to = over.id.toString();
+    if (from === to) return;
 
-    if (fromGroupId === toGroupId) return;
+    const id = +idStr;
 
-    let movedItem: FacultyItem | undefined;
-
-    const fromIndex = groups.findIndex((g) => g.title === fromGroupId);
-    const toIndex = groups.findIndex((g) => g.title === toGroupId);
-
-    if (fromGroupId === "unassigned") {
-      movedItem = unassigned.find((i) => i.id === itemId);
-      if (!movedItem) return;
-      setUnassigned((prev) => prev.filter((i) => i.id !== itemId));
-    } else if (fromIndex >= 0) {
-      movedItem = groups[fromIndex].items.find((i) => i.id === itemId);
-      if (!movedItem) return;
-      setGroups((prev) => {
-        const updated = [...prev];
-        updated[fromIndex] = {
-          ...updated[fromIndex],
-          items: updated[fromIndex].items.filter((i) => i.id !== itemId),
-        };
-        return updated;
-      });
+    /* -------- หา item ต้นทางเพื่อตรวจ quota -------- */
+    let sourceItem: FacultyItem | undefined;
+    if (from === "unassigned") {
+      sourceItem = unassigned.find((u) => u.id === id);
+    } else {
+      const g = groups.find((gr) => gr.round === +from);
+      sourceItem = g?.items.find((it) => it.id === id);
     }
 
-    if (!movedItem) return;
-
-    // ✅ ต้องใช้ค่า movedItem ล่าสุดจาก state (ไม่ใช่ clone เก่า)
-    const updatedItem = (() => {
-      if (fromGroupId === "unassigned") {
-        const existing = unassigned.find((i) => i.id === itemId);
-        return existing ? { ...existing } : { ...movedItem! };
-      } else {
-        const g = groups.find((g) => g.title === fromGroupId);
-        const existing = g?.items.find((i) => i.id === itemId);
-        return existing ? { ...existing } : { ...movedItem! };
-      }
-    })();
-
-    if (toGroupId === "unassigned") {
-      setUnassigned((prev) => [...prev, updatedItem]);
-    } else if (toIndex >= 0) {
-      setGroups((prev) => {
-        const updated = [...prev];
-        updated[toIndex] = {
-          ...updated[toIndex],
-          items: [...updated[toIndex].items, updatedItem],
-        };
-        return updated;
-      });
+    /* -------- เหลือ 0 → แจ้งเตือนแล้วไม่ให้ลาก -------- */
+    if (!sourceItem || sourceItem.value === 0) {
+      alert(
+        `ไม่สามารถย้าย "${sourceItem?.name ?? "รายการ"}" ยังไม่มีตน`
+      );
+      return;
     }
-  };
 
-  const handleAddGroup = () => {
+    /* -------- ย้ายตามปกติ -------- */
     setGroups((prev) => {
-      const newGroup = {
-        title: `รอบที่ ${prev.length + 1}`,
-        items: [],
-      };
-      return [...prev, newGroup];
+      const next = [...prev];
+      let moved: FacultyItem | undefined;
+
+      // ======== PULL ออกก่อน ========
+      if (from !== "unassigned") {
+        const g = next.find((gr) => gr.round === +from);
+        const i = g?.items.findIndex((it) => it.id === id) ?? -1;
+        if (g && i >= 0) moved = g.items.splice(i, 1)[0];
+      } else {
+        moved = unassigned.find((u) => u.id === id);
+        setUnassigned((ua) => ua.filter((u) => u.id !== id));
+      }
+      if (!moved) return prev;
+
+      // ======== PUSH เข้าเป้าหมาย ========
+      if (to !== "unassigned") {
+        const g = next.find((gr) => gr.round === +to);
+        if (!g) return prev;
+
+        const dup = g.items.find((it) => it.id === moved!.id);
+        if (dup) {
+          const total = dup.value + moved!.value;
+          if (total > dup.student_count) {
+            alert(
+              `"${dup.name}" มีอยู่แล้วในรอบนี้ และเกิน quota รวม (${total}/${dup.student_count})`
+            );
+            // ย้ายกลับคืน unassigned
+            if (from === "unassigned") {
+              setUnassigned((ua) => [...ua, moved!]);
+            } else {
+              const fromGroup = next.find((gr) => gr.round === +from);
+              fromGroup?.items.push(moved!);
+            }
+            return prev;
+          }
+          dup.value = total; // ✅ รวมค่า
+        } else {
+          g.items.push(moved!);
+        }
+      } else {
+        setUnassigned((ua) => [...ua, moved!]);
+      }
+
+      recalcUnassigned(next);
+      return next;
     });
   };
 
-  const handleSaveData = async () => {
-    const payload: any = groups.map((group) => ({
-      round: parseInt(group.title.replace("รอบที่ ", "")),
-      faculties: group.items.map((item) => ({
-        faculty_id: item.id,
-        quota: item.value,
+  /* ----- add / remove group ----- */
+  const handleAddGroup = () =>
+    setGroups((prev) => {
+      const nextRound = Math.max(0, ...prev.map((g) => g.round)) + 1;
+      return [
+        ...prev,
+        { round: nextRound, title: `รอบที่ ${nextRound}`, items: [] },
+      ];
+    });
+
+  const handleRemoveGroup = (round: number) =>
+    setGroups((prev) => {
+      const rm = prev.find((g) => g.round === round);
+      if (!rm) return prev;
+      setUnassigned((ua) => [...ua, ...rm.items]);
+      const updated = prev.filter((g) => g.round !== round);
+      recalcUnassigned(updated);
+      return updated;
+    });
+
+  /* ----- save ----- */
+  const handleSave = async () => {
+    const payload: any = groups.map((g) => ({
+      round: g.round,
+      faculties: g.items.map((it) => ({
+        faculty_id: it.id,
+        quota: it.value,
       })),
     }));
 
-    try {
-      const result = await saveQuotaGroups(payload);
-      if (result.status === "success") {
-        alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
-      } else {
-        alert("❌ บันทึกไม่สำเร็จ");
-      }
-    } catch (error) {
-      console.error("❌ Save error:", error);
-      alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+    const res = await saveQuotaGroups(payload);
+
+    if (res.status === "success") {
+      alert("✅ บันทึกเรียบร้อย");
+      await fetchData(); // <-- โหลดใหม่หลังบันทึก
+    } else {
+      alert("❌ บันทึกไม่สำเร็จ");
     }
   };
 
-  const handleRemoveGroup = (index: number) => {
-    const removedItems = groups[index].items;
-    setUnassigned((prev) => [...prev, ...removedItems]);
-    setGroups((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      return updated.map((g, i) => ({ ...g, title: `รอบที่ ${i + 1}` }));
-    });
-  };
-
+  /* ---------- UI ---------- */
   return (
     <Card className="bg-white shadow-xl border border-orange-100">
       <CardHeader>
@@ -283,13 +351,13 @@ export const GroupedFacultyInput = () => {
           <Button
             onClick={handleAddGroup}
             variant="outline"
-            className="flex items-center gap-2 text-orange-600 border-orange-300 hover:text-orange-700">
+            className="flex items-center gap-2 text-orange-600 border-orange-300">
             <PlusCircle className="w-5 h-5" />
             เพิ่มรอบใหม่
           </Button>
           <Button
-            onClick={handleSaveData}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
+            onClick={handleSave}
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg">
             บันทึกข้อมูล
           </Button>
         </div>
@@ -298,65 +366,73 @@ export const GroupedFacultyInput = () => {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}>
-          {groups.map((group, index) => (
-            <div key={`group-${index}`} className="space-y-2">
+          {groups.map((g) => (
+            <div key={g.round} className="space-y-2">
               <div className="flex justify-between items-center">
-                <h4 className="font-semibold text-orange-700">{group.title}</h4>
+                <h4 className="font-semibold text-orange-700">{g.title}</h4>
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleRemoveGroup(index)}
-                  className="text-red-500 hover:text-red-600">
+                  onClick={() => handleRemoveGroup(g.round)}
+                  className="text-red-500">
                   <Trash2 className="w-4 h-4 mr-1" />
                   ลบรอบ
                 </Button>
               </div>
-              <DroppableGroup groupId={group.title}>
+
+              <DroppableGroup groupId={g.round.toString()}>
                 <SortableContext
-                  items={group.items.map(
-                    (i) => `draggable-${group.title}-${i.id}`
-                  )}
+                  items={g.items.map((i) => `draggable-${g.round}-${i.id}`)}
                   strategy={verticalListSortingStrategy}>
-                  {group.items.map((item) => (
-                    <DraggableFaculty
-                      key={`draggable-${group.title}-${item.id}`}
-                      item={item}
-                      groupId={group.title}
-                      onValueChange={(id, value) =>
-                        handleValueChange(id, value, "group", group.title)
-                      }
-                    />
-                  ))}
+                  {g.items.map((it) => {
+                    const other = groups
+                      .filter((gr) => gr.round !== g.round)
+                      .flatMap((gr) => gr.items)
+                      .filter((o) => o.id === it.id)
+                      .reduce((s, o) => s + o.value, 0);
+                    const maxAllowed = it.student_count - other;
+                    return (
+                      <DraggableFaculty
+                        key={`draggable-${g.round}-${it.id}`}
+                        item={it}
+                        groupId={g.round.toString()}
+                        maxAllowed={maxAllowed}
+                        onValueChange={(id, val) =>
+                          handleValueChange(id, val, "group", g.round)
+                        }
+                      />
+                    );
+                  })}
                 </SortableContext>
               </DroppableGroup>
 
-              {index < groups.length - 1 && <Separator className="my-4" />}
+              <Separator className="my-4" />
             </div>
           ))}
 
           <Separator className="my-6" />
 
-          <div>
-            <h4 className="font-semibold text-orange-700 mb-2">
-              คณะที่ยังไม่ได้จัดรอบ
-            </h4>
-            <DroppableGroup groupId="unassigned">
-              <SortableContext
-                items={unassigned.map((i) => `draggable-unassigned-${i.id}`)}
-                strategy={verticalListSortingStrategy}>
-                {unassigned.map((item) => (
-                  <DraggableFaculty
-                    key={`draggable-unassigned-${item.id}`}
-                    item={item}
-                    groupId="unassigned"
-                    onValueChange={(id, value) =>
-                      handleValueChange(id, value, "unassigned")
-                    }
-                  />
-                ))}
-              </SortableContext>
-            </DroppableGroup>
-          </div>
+          {/* unassigned */}
+          <h4 className="font-semibold text-orange-700 mb-2">
+            คณะที่ยังไม่ได้จัดรอบ
+          </h4>
+          <DroppableGroup groupId="unassigned">
+            <SortableContext
+              items={unassigned.map((i) => `draggable-unassigned-${i.id}`)}
+              strategy={verticalListSortingStrategy}>
+              {unassigned.map((it) => (
+                <DraggableFaculty
+                  key={`draggable-unassigned-${it.id}`}
+                  item={it}
+                  groupId="unassigned"
+                  maxAllowed={it.value}
+                  onValueChange={(id, val) =>
+                    handleValueChange(id, val, "unassigned")
+                  }
+                />
+              ))}
+            </SortableContext>
+          </DroppableGroup>
         </DndContext>
       </CardContent>
     </Card>
