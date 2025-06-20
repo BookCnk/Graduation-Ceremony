@@ -21,7 +21,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { resetReceivedCards } from "@/services/graduatesService";
-import { getDropdowns } from "@/services/ddlService";
+import { getDropdowns, createFaculty } from "@/services/ddlService";
 
 /* ───────────── Types ───────────── */
 interface Faculty {
@@ -35,6 +35,27 @@ export default function FormAddData() {
   /* ----- dialog states ----- */
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isDataDialogOpen, setIsDataDialogOpen] = useState(false);
+  const [newFaculty, setNewFaculty] = useState("");
+
+  const handleCreateFaculty = async () => {
+    const name = newFaculty.trim();
+    if (!name) return;
+    try {
+      const res: any = await createFaculty({ name });
+      if (res.status === "success") {
+        setNewFaculty("");
+        if (isDataDialogOpen) {
+          const refresh: any = await getDropdowns("faculty");
+          setFaculties(refresh.data);
+        }
+      } else {
+        alert("เพิ่มคณะไม่สำเร็จ");
+      }
+    } catch (err) {
+      console.error("❌ createFaculty error:", err);
+      alert("เกิดข้อผิดพลาดในการเพิ่มคณะ");
+    }
+  };
 
   /* ----- faculties ----- */
   const [faculties, setFaculties] = useState<Faculty[]>([]);
@@ -233,9 +254,16 @@ export default function FormAddData() {
           <CardTitle className="text-orange-600">เพิ่มชื่อคณะ</CardTitle>
         </CardHeader>
         <CardContent>
-          <Input placeholder="กรอกชื่อคณะ..." className="mb-4" />
+          <Input
+            placeholder="กรอกชื่อคณะ..."
+            className="mb-4"
+            value={newFaculty}
+            onChange={(e) => setNewFaculty(e.target.value)}
+          />
           <div className="flex justify-end gap-2">
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={handleCreateFaculty}>
               บันทึก
             </Button>
             <Button

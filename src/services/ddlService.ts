@@ -15,3 +15,19 @@ export const getDropdowns = async (type: string): Promise<any[]> => {
 
   return await res.json();
 };
+
+export const createFaculty = async (payload: any): Promise<any[]> => {
+  const res = await fetch(`${BASE_URL}/faculty/add`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch failed: ${res.status}`);
+  }
+
+  return await res.json();
+};

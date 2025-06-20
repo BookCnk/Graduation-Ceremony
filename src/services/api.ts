@@ -30,9 +30,7 @@ export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
   return await res.json();
 };
 
-export const register = async (
-  payload: any
-): Promise<LoginResponse> => {
+export const register = async (payload: any): Promise<LoginResponse> => {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: {
@@ -79,4 +77,10 @@ export const changePassword = async (payload: any): Promise<any> => {
   }
 
   return json;
+};
+
+export const deleteUser = async (id: number) => {
+  const res = await fetch(`${BASE_URL}/auth/users/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return await res.json();
 };

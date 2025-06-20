@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthStore } from "@/stores/authStore";
 
-import { getAllUser, register, changePassword } from "@/services/api";
+import {
+  getAllUser,
+  register,
+  changePassword,
+  deleteUser,
+} from "@/services/api";
 
 interface User {
   id: number;
@@ -144,6 +149,19 @@ const Settings = () => {
   const handleDelete = (user: User) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
+  };
+
+  // ⬆️ ใส่ไว้ใน Settings component ใกล้ ๆ กับ handleEdit / handleDelete
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+    try {
+      await deleteUser(selectedUser.id); // ← เรียก API
+      await fetchUsers(); // ← รีโหลดตาราง
+    } catch (err: any) {
+      alert(err.message || "ลบผู้ใช้งานไม่สำเร็จ");
+    } finally {
+      setIsDeleteDialogOpen(false); // ปิด Dialog ไม่ว่าผลจะเป็นอย่างไร
+    }
   };
 
   return (
@@ -310,7 +328,9 @@ const Settings = () => {
                 onClick={() => setIsDeleteDialogOpen(false)}>
                 ยกเลิก
               </Button>
-              <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+              <Button
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                onClick={handleConfirmDelete}>
                 บันทึก
               </Button>
             </DialogFooter>
