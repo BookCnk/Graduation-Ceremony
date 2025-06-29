@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRemainingNotReceived } from "@/services/graduatesService";
 
-const NumberDisplay = () => {
+const   NumberDisplay = () => {
   const [remainingCount, setRemainingCount] = useState<number | null>(null);
   const [roundNumber, setRoundNumber] = useState<number | null>(null);
 
