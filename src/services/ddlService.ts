@@ -31,3 +31,32 @@ export const createFaculty = async (payload: any): Promise<any[]> => {
 
   return await res.json();
 };
+
+export const deleteFaculty = async (id: number): Promise<any> => {
+  const res = await fetch(`${BASE_URL}/faculty/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Delete failed: ${res.status}`);
+  }
+
+  return await res.json();
+};
+
+export const importGraduates = async (payload: any[]): Promise<any> => {
+  const res = await fetch(`${BASE_URL}/import/grad`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Import failed: ${res.status}`);
+  }
+
+  return await res.json();
+};
+
+
+

@@ -6,6 +6,7 @@ import {
   Settings as SettingsIcon,
   Hash,
   BarChart,
+  BarChart2,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore"; // ✅ Update path if needed
 import Login from "./components/Login";
@@ -14,6 +15,7 @@ import ImportData from "@/components/ImportData";
 import Summary from "@/components/Summary";
 import Dashboard from "@/components/Dashboard"; // path ตามที่คุณจัดโฟลเดอร์
 import NumberDisplay from "@/components/NumberDisplay"; // path ตามที่คุณจัดโฟลเดอร์
+import GradData from "@/components/GradData";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -70,6 +72,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/number" element={<NumberDisplay />} />
+      <Route path="/grad-data" element={<GradData />} />
 
       <Route
         path="/*"
@@ -104,6 +107,13 @@ function App() {
                         className="px-4 py-2 rounded-lg hover:bg-orange-50 text-gray-700 hover:text-orange-600 transition-colors flex items-center">
                         <Hash className="w-4 h-4 mr-2" />
                         แสดงตัวเลข
+                      </Link>
+                      <Link
+                        to="/grad-data"
+                        target="_blank"
+                        className="px-4 py-2 rounded-lg hover:bg-orange-50 text-gray-700 hover:text-orange-600 transition-colors flex items-center">
+                        <BarChart2 className="w-4 h-4 mr-2" />
+                        แสดงยอด
                       </Link>
                       <Link
                         to="/import"

@@ -4,6 +4,8 @@ import {
   setGraduateAsReceived,
 } from "@/services/graduatesService";
 import { motion, AnimatePresence } from "framer-motion";
+import socket from "@/socket"; 
+
 
 interface Graduate {
   id: number;
@@ -57,6 +59,20 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
   useEffect(() => {
     fetchGraduate(true); // เรียกครั้งแรกแสดง loading
   }, [fetchGraduate]);
+
+  useEffect(() => {
+    const onGraduateCalled = () => {
+      console.log("📡 graduate-called event received from socket");
+      fetchGraduate(); 
+    };
+
+    socket.on("graduate-called", onGraduateCalled);
+
+    return () => {
+      socket.off("graduate-called", onGraduateCalled);
+    };
+  }, [fetchGraduate]);
+
 
   const handleNextGraduate = useCallback(async () => {
     if (!graduate) return;

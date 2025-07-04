@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { Trash2 } from "lucide-react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -21,7 +21,11 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { resetReceivedCards } from "@/services/graduatesService";
-import { getDropdowns, createFaculty } from "@/services/ddlService";
+import {
+  getDropdowns,
+  createFaculty,
+  deleteFaculty,
+} from "@/services/ddlService";
 
 /* ───────────── Types ───────────── */
 interface Faculty {
@@ -35,15 +39,27 @@ export default function FormAddData() {
   /* ----- dialog states ----- */
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isDataDialogOpen, setIsDataDialogOpen] = useState(false);
-  const [newFaculty, setNewFaculty] = useState("");
+  // const [newFaculty, setNewFaculty] = useState("");
+
+  const [newFacultyId, setNewFacultyId] = useState("");
+  const [newFacultyName, setNewFacultyName] = useState("");
 
   const handleCreateFaculty = async () => {
-    const name = newFaculty.trim();
-    if (!name) return;
+    const id = parseInt(newFacultyId.trim());
+    const name = newFacultyName.trim();
+
+    if (!id || !name) {
+      alert("กรุณากรอกทั้งรหัสคณะและชื่อคณะ");
+      return;
+    }
+
     try {
-      const res: any = await createFaculty({ name });
+      const res: any = await createFaculty({ id, name });
+
       if (res.status === "success") {
-        setNewFaculty("");
+        setNewFacultyId("");
+        setNewFacultyName("");
+
         if (isDataDialogOpen) {
           const refresh: any = await getDropdowns("faculty");
           setFaculties(refresh.data);
@@ -82,10 +98,47 @@ export default function FormAddData() {
     () => [
       { accessorKey: "id", header: "ID" },
       { accessorKey: "name", header: "ชื่อคณะ" },
-      { accessorKey: "faculty_code", header: "รหัสคณะ" },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <button
+            onClick={() => handleDeleteFaculty(row.original.id)}
+            className="text-red-600 hover:text-red-800"
+            title="ลบคณะ">
+            <Trash2 size={18} />
+          </button>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
     ],
     []
   );
+
+  const handleDeleteFaculty = async (id: number) => {
+    const confirmDelete = window.confirm("คุณต้องการลบคณะนี้ใช่หรือไม่?");
+    if (!confirmDelete) return;
+
+    try {
+      const res: any = await deleteFaculty(id);
+
+      if (res.status === "success") {
+        alert("ลบสำเร็จ");
+
+        // 🔄 รีโหลดข้อมูลใหม่
+        const refresh: any = await getDropdowns("faculty");
+        setFaculties(refresh.data);
+      } else {
+        alert("ลบไม่สำเร็จ");
+      }
+    } catch (err) {
+      console.error("❌ deleteFaculty error:", err);
+      alert("เกิดข้อผิดพลาดในการลบคณะ");
+    }
+  };
+
+
 
   /* ----- table instance ----- */
   const table = useReactTable({
@@ -249,16 +302,22 @@ export default function FormAddData() {
           </Button>
         </CardContent>
 
-        {/* add faculty */}
         <CardHeader>
-          <CardTitle className="text-orange-600">เพิ่มชื่อคณะ</CardTitle>
+          <CardTitle className="text-orange-600">เพิ่มข้อมูลคณะ</CardTitle>
         </CardHeader>
         <CardContent>
           <Input
+            type="number"
+            placeholder="กรอกรหัสคณะ (ID)..."
+            className="mb-4"
+            value={newFacultyId}
+            onChange={(e) => setNewFacultyId(e.target.value)}
+          />
+          <Input
             placeholder="กรอกชื่อคณะ..."
             className="mb-4"
-            value={newFaculty}
-            onChange={(e) => setNewFaculty(e.target.value)}
+            value={newFacultyName}
+            onChange={(e) => setNewFacultyName(e.target.value)}
           />
           <div className="flex justify-end gap-2">
             <Button
