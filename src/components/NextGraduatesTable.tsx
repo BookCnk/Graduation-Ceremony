@@ -17,13 +17,18 @@ const columns: ColumnDef<any>[] = [
     cell: (info) => info.getValue(),
   },
   {
-    header: "นามสกุล",
-    accessorKey: "last_name",
+    header: "คณะ",
+    accessorKey: "faculty_name",
     cell: (info) => info.getValue(),
   },
   {
-    header: "คณะ",
-    accessorKey: "faculty_name",
+    header: "สาขา",
+    accessorKey: "major",
+    cell: (info) => info.getValue(),
+  },
+  {
+    header: "รอบ",
+    accessorKey: "round_number",
     cell: (info) => info.getValue(),
   },
 ];

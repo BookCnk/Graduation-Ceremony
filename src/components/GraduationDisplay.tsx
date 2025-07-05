@@ -4,8 +4,7 @@ import {
   setGraduateAsReceived,
 } from "@/services/graduatesService";
 import { motion, AnimatePresence } from "framer-motion";
-import socket from "@/socket"; 
-
+import socket from "@/socket";
 
 interface Graduate {
   id: number;
@@ -13,6 +12,8 @@ interface Graduate {
   order: number;
   faculty: string;
   round: number;
+  degree_level: string;
+  degree_name: string;
 }
 
 interface GraduateProps {
@@ -30,21 +31,22 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
       if (res.status === "success" && res.data) {
         const {
           id,
-          prefix,
           first_name,
-          last_name,
           sequence,
           degree_name,
           faculty_name,
           round_number,
+          degree_level,
         } = res.data;
 
         setGraduate({
           id,
-          name: `${prefix} ${first_name} ${last_name}`,
+          name: `${first_name}`,
           order: sequence,
-          faculty: `${faculty_name} (${degree_name})`,
+          faculty: `${faculty_name}`,
+          degree_name: `(${degree_name})`,
           round: round_number,
+          degree_level: degree_level,
         });
       } else {
         setGraduate(null);
@@ -63,7 +65,7 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
   useEffect(() => {
     const onGraduateCalled = () => {
       console.log("📡 graduate-called event received from socket");
-      fetchGraduate(); 
+      fetchGraduate();
     };
 
     socket.on("graduate-called", onGraduateCalled);
@@ -72,7 +74,6 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
       socket.off("graduate-called", onGraduateCalled);
     };
   }, [fetchGraduate]);
-
 
   const handleNextGraduate = useCallback(async () => {
     if (!graduate) return;
@@ -146,6 +147,20 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
               </label>
               <p className="text-xl font-medium text-gray-700">
                 {graduate.faculty}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">สาขา</label>
+              <p className="text-xl font-medium text-gray-700">
+                {graduate.degree_level}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">ปริญญา</label>
+              <p className="text-xl font-medium text-gray-700">
+                {graduate.degree_name}
               </p>
             </div>
 

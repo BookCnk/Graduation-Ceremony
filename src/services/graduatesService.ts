@@ -112,20 +112,7 @@ export const getRemainingNotReceived = async (): Promise<{
   return await res.json();
 };
 
-export const getFirstGraduateNotReceived = async (): Promise<{
-  status: string;
-  message?: string;
-  data?: {
-    id: number;
-    prefix: string;
-    first_name: string;
-    last_name: string;
-    sequence: number;
-    degree_name: string;
-    faculty_name: string;
-    round_number: number;
-  } | null;
-}> => {
+export const getFirstGraduateNotReceived = async (): Promise<any> => {
   const res = await fetch(`${BASE_URL}/first-not-received`, {
     method: "GET",
     headers: {
@@ -204,6 +191,30 @@ export const resetReceivedCards = async (): Promise<{
   data?: { success: boolean };
 }> => {
   const res = await fetch(`${BASE_URL}/reset-cards`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return await res.json();
+};
+
+export const getGraduateSummary = async (): Promise<any> => {
+  const res = await fetch(`${BASE_URL}/graduate/summary`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return await res.json();
+};
+
+export const CurrentRoundOverview = async (): Promise<any> => {
+  const res = await fetch(`${BASE_URL}/graduate/overview`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

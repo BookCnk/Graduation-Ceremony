@@ -1,63 +1,45 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { FileUp } from "lucide-react";
-// import {
-//   DropdownMenu,
-//   DropdownMenuTrigger,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuLabel,
-//   DropdownMenuSeparator,
-// } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { importGraduates } from "@/services/ddlService";
 import * as XLSX from "xlsx";
 
-// interface Faculty {
-//   id: number;
-//   name: string;
-//   faculty_code: string;
-// }
-
 const ImportData: React.FC = () => {
-  // const [faculties, setFaculties] = useState<Faculty[]>([]);
-  // const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // useEffect(() => {
-  //   const fetchFaculties = async () => {
-  //     try {
-  //       const data: any = await getDropdowns("faculty");
-  //       // setFaculties(data.data);
-  //     } catch (error) {
-  //       console.error("❌ Failed to fetch faculties:", error);
-  //     }
-  //   };
+  const transformExcelData = (data: any[]): any[] => {
+    const facultySequenceMap: Record<number, number> = {};
 
-  //   fetchFaculties();
-  // }, []);
+    return data
+      .filter((row: any) => row.STATUSCODE === "1") 
+      .map((row: any, index: number) => {
+        const fullName = row.GRADNAMET?.trim() || "";
+        const facultyId = parseInt(row.FACULTYCODE || "0");
+        const dgdcCode = parseInt(row.DGDCODE || "0");
 
-  // const handleSelectFaculty = (faculty: Faculข้อมูลบัณฑิตปัจจุบันty) => {
-  //   setSelectedFaculty(faculty);
-  // };
+        if (!facultySequenceMap[facultyId]) {
+          facultySequenceMap[facultyId] = 1;
+        } else {
+          facultySequenceMap[facultyId]++;
+        }
 
-  function transformExcelData(data: any[]): any[] {
-    return data.map((row: any, index: number) => {
-      const fullName = row.GRADNAMET?.trim() || "";
-
-      return {
-        id: parseInt(row.GDCODE || index + 1),
-        prefix: "",
-        first_name: fullName || "-",
-        last_name: "",
-        degree_level: row.LEVELCODE || "",
-        degree_name: row.DEGREENAMET || "",
-        faculty_id: parseInt(row.FACULTYCODE || "0"),
-        sequence: parseInt(row.DGDCODE || "0"),
-        round_id: null,
-        has_received_card: 0,
-        graduate_type: row.STATUSCODE || null,
-      };
-    });
-  }
+        return {
+          id: parseInt(row.GDCODE || `${index + 1}`),
+          prefix: "",
+          first_name: fullName || "-",
+          last_name: "",
+          degree_level: row.FOSNAMET || "",
+          degree_name: row.DEGREENAMET || "",
+          faculty_id: facultyId,
+          sequence: facultySequenceMap[facultyId],
+          round_id: null,
+          has_received_card: 0,
+          graduate_type: row.STATUSCODE || null,
+          global_sequence: dgdcCode,
+        };
+      });
+  };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,16 +51,14 @@ const ImportData: React.FC = () => {
       if (!data || !(data instanceof ArrayBuffer)) return;
 
       try {
+        setLoading(true); // 🔄 Start loading
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-        console.log("📥 Excel data:", jsonData);
-
-        const transformedData: any = transformExcelData(jsonData);
+        const transformedData = transformExcelData(jsonData);
         const res = await importGraduates(transformedData);
-        console.log(transformedData);
 
         if (res.status === "success") {
           alert("✅ นำเข้าข้อมูลบัณฑิตสำเร็จ");
@@ -88,6 +68,8 @@ const ImportData: React.FC = () => {
       } catch (err) {
         console.error("❌ Error importing Excel:", err);
         alert("เกิดข้อผิดพลาดในการอ่านไฟล์");
+      } finally {
+        setLoading(false); // ✅ Stop loading
       }
     };
 
@@ -122,69 +104,48 @@ const ImportData: React.FC = () => {
     XLSX.writeFile(workbook, "ตัวอย่างข้อมูลบัณฑิต.xlsx");
   };
 
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
   const triggerUpload = () => {
     inputRef.current?.click();
   };
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
-      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
-        นำเข้าข้อมูลบัณฑิต
-      </h2>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl">
+          <img
+            src="/assets/loading.svg"
+            alt="Loading..."
+            className="w-20 h-20"
+          />
+        </div>
+      )}
 
-      {/* <div className="mb-6 text-left">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          เลือกคณะ
-        </label>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full justify-between">
-              {selectedFaculty?.name ?? "เลือกคณะ"}
-              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            align="start"
-            sideOffset={4}
-            className="w-[var(--radix-dropdown-menu-trigger-width)]">
-            <DropdownMenuLabel>รายชื่อคณะ</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {faculties.map((faculty) => (
-              <DropdownMenuItem
-                key={faculty.id}
-                onClick={() => handleSelectFaculty(faculty)}>
-                {faculty.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div> */}
-
-      <div className="space-y-4">
-        <div className="border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
-          <FileUp className="w-12 h-12 mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600 mb-4">คลิกเพื่อเลือกไฟล์</p>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={handleImportExcel}
-            />
-
-            <div className="flex gap-2">
-              <Button type="button" onClick={triggerUpload}>
-                เลือกไฟล์
-              </Button>
-              <Button
-                onClick={handleExportSampleExcel}
-                className="bg-green-600 hover:bg-green-700 text-white">
-                ดาวน์โหลด Excel ตัวอย่าง
-              </Button>
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
+        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+          นำเข้าข้อมูลบัณฑิต
+        </h2>
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
+            <FileUp className="w-12 h-12 mx-auto mb-4 text-orange-500" />
+            <p className="text-gray-600 mb-4">คลิกเพื่อเลือกไฟล์</p>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportExcel}
+              />
+              <div className="flex gap-2">
+                <Button type="button" onClick={triggerUpload}>
+                  เลือกไฟล์
+                </Button>
+                <Button
+                  onClick={handleExportSampleExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white">
+                  ดาวน์โหลด Excel ตัวอย่าง
+                </Button>
+              </div>
             </div>
           </div>
         </div>

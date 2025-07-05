@@ -110,7 +110,6 @@ function App() {
                       </Link>
                       <Link
                         to="/grad-data"
-                        target="_blank"
                         className="px-4 py-2 rounded-lg hover:bg-orange-50 text-gray-700 hover:text-orange-600 transition-colors flex items-center">
                         <BarChart2 className="w-4 h-4 mr-2" />
                         แสดงยอด
@@ -158,6 +157,7 @@ function App() {
                   <Route path="/import" element={<ImportData />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/summary" element={<Summary />} />
+                  <Route path="/grad-data" element={<GradData />} />
                 </Routes>
               </main>
 
