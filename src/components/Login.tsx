@@ -12,8 +12,7 @@ import {
 import { GraduationCap } from "lucide-react";
 import { login } from "@/services/api";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore"; // ✅ ใช้ zustand store
-
+import { useAuthStore } from "@/stores/authStore"; 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

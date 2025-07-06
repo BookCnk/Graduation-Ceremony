@@ -1,17 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback } from "react";
-import {
-  getFirstGraduateNotReceived,
-  getRoundCallSummary,
-  getNextGraduates,
-  getGraduateSummary,
-} from "@/services/graduatesService";
+import { useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
+import socket from "@/socket";
 
 interface Graduate {
   id: number;
@@ -38,113 +33,81 @@ const GradData = () => {
   const [summaryAll, setSummaryAll] = useState<any>(null);
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
-
   const [nextData, setNextData] = useState<any[]>([]);
 
-  const fetchGraduate = useCallback(async (showSpinner = false) => {
-    try {
-      if (showSpinner) setLoading(true);
-      const res = await getFirstGraduateNotReceived();
-      if (res.status === "success" && res.data) {
-        const {
-          id,
-          first_name,
-          sequence,
-          degree_name,
-          faculty_name,
-          round_number,
-          degree_level,
-        } = res.data;
-
-        setGraduate({
-          id,
-          name: `${first_name}`,
-          order: sequence,
-          faculty: `${faculty_name}`,
-          degree_name: `(${degree_name})`,
-          round: round_number,
-          degree_level: degree_level,
-        });
-      } else {
-        setGraduate(null);
-      }
-    } catch (err) {
-      console.error("❌ โหลดข้อมูลไม่สำเร็จ:", err);
-    } finally {
-      if (showSpinner) setLoading(false);
-    }
-  }, []);
-
-  const fetchSummary = useCallback(async () => {
-    try {
-      const res = await getRoundCallSummary();
-      if (res.status === "success" && res.data) {
-        setSummary({
-          current_round: res.data.current_round,
-          total_in_round: Number(res.data.total_in_round),
-          already_called: Number(res.data.already_called),
-          remaining: Number(res.data.remaining),
-          latest_called_sequence: res.data.latest_called_sequence,
-          total_all_rounds: Number(res.data.total_all_rounds),
-        });
-      }
-    } catch (err) {
-      console.error("❌ ไม่สามารถดึงสรุปผลรอบได้:", err);
-    } finally {
-      setSummaryLoading(false);
-    }
-  }, []);
-
-  const fetchNextData = useCallback(async () => {
-    try {
-      const res = await getNextGraduates();
-      if (res.status === "success") {
-        setNextData(res.data ?? []);
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch next graduates:", err);
-    }
-  }, []);
-
-  //   const handleNextGraduate = useCallback(async () => {
-  //     if (!graduate) return;
-  //     try {
-  //       await setGraduateAsReceived(graduate.id);
-  //       await fetchGraduate();
-  //       await fetchSummary();
-  //       await fetchNextData();
-  //     } catch (err) {
-  //       console.error("❌ อัปเดตสถานะบัณฑิตล้มเหลว:", err);
-  //     }
-  //   }, [graduate, fetchGraduate, fetchSummary, fetchNextData]);
-  const fetchGraduateSummary = useCallback(async () => {
-    try {
-      const res = await getGraduateSummary();
-      if (res.status === "success" && res.data) {
-        setSummaryAll(res.data);
-      }
-    } catch (err) {
-      console.error("❌ โหลด summary รวมไม่สำเร็จ:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchGraduate(true);
-    fetchSummary();
-    fetchNextData();
-    fetchGraduateSummary();
-  }, [fetchGraduate, fetchSummary, fetchNextData, fetchGraduateSummary]);
+    const handleGraduateSummary = (payload: any) => {
+      if (payload.status === "success") {
+        const {
+          first_graduate,
+          next_graduates,
+          round_summary,
+          graduate_summary,
+        } = payload.data;
 
-  //   useEffect(() => {
-  //     const onKeyDown = (e: KeyboardEvent) => {
-  //       if (e.code === "Space" || e.key === " ") {
-  //         e.preventDefault();
-  //         handleNextGraduate();
-  //       }
-  //     };
-  //     window.addEventListener("keydown", onKeyDown);
-  //     return () => window.removeEventListener("keydown", onKeyDown);
-  //   }, [handleNextGraduate]);
+        if (first_graduate) {
+          const {
+            id,
+            first_name,
+            sequence,
+            degree_name,
+            faculty_name,
+            round_number,
+            degree_level,
+          } = first_graduate;
+
+          setGraduate({
+            id,
+            name: first_name,
+            order: sequence,
+            faculty: faculty_name,
+            degree_name: `(${degree_name})`,
+            round: round_number,
+            degree_level,
+          });
+        } else {
+          setGraduate(null);
+        }
+
+        if (next_graduates) setNextData(next_graduates);
+        if (round_summary) {
+          setSummary({
+            current_round: round_summary.current_round,
+            total_in_round: Number(round_summary.total_in_round),
+            already_called: Number(round_summary.already_called),
+            remaining: Number(round_summary.remaining),
+            latest_called_sequence: round_summary.latest_called_sequence,
+            total_all_rounds: Number(round_summary.total_all_rounds),
+          });
+        }
+
+        if (graduate_summary) {
+          setSummaryAll(graduate_summary);
+        }
+
+        setLoading(false);
+        setSummaryLoading(false);
+      }
+    };
+
+    // const handleGraduateSummarySimple = (payload: any) => {
+    //   if (payload.status === "success") {
+    //     console.log(payload.data.graduate_summary);
+
+    //     setSummaryAll(payload.data.graduate_summary);
+    //   }
+    // };
+
+    socket.on("graduate-summary", handleGraduateSummary);
+    // socket.on("graduate-overview", handleGraduateSummarySimple);
+
+    socket.emit("request-summary");
+
+    return () => {
+      socket.off("graduate-summary", handleGraduateSummary);
+      // socket.off("graduate-overview", handleGraduateSummarySimple);
+    };
+  }, []);
 
   const percentage = summary?.total_in_round
     ? Math.round((summary.already_called / summary.total_in_round) * 100)
