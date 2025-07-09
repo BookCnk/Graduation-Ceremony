@@ -16,8 +16,10 @@ jobs:
       - name: Sync environment
         run: |
           cat > .env << EOF
-          VITE_API_URL=${{ secrets.VITE_API_URL }} 
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
           EOF
+
 
       - name: Start with Docker Compose
         run: |
