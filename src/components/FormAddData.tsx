@@ -20,7 +20,10 @@ import {
 } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { resetReceivedCards } from "@/services/graduatesService";
+import {
+  resetReceivedCards,
+  deleteAllGraduationData,
+} from "@/services/graduatesService";
 import {
   getDropdowns,
   createFaculty,
@@ -38,6 +41,7 @@ interface Faculty {
 export default function FormAddData() {
   /* ----- dialog states ----- */
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDataDialogOpen, setIsDataDialogOpen] = useState(false);
   // const [newFaculty, setNewFaculty] = useState("");
 
@@ -138,8 +142,6 @@ export default function FormAddData() {
     }
   };
 
-
-
   /* ----- table instance ----- */
   const table = useReactTable({
     data: faculties,
@@ -159,6 +161,17 @@ export default function FormAddData() {
       console.error("❌ resetReceivedCards error:", err);
     } finally {
       setIsResetDialogOpen(false);
+    }
+  };
+
+  const handleDeleteReset = async () => {
+    try {
+      await deleteAllGraduationData();
+      // 🔄 refresh data (ถ้ามี) ที่นี่
+    } catch (err) {
+      console.error("❌ deleteAllGraduationData error:", err);
+    } finally {
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -187,6 +200,32 @@ export default function FormAddData() {
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
               onClick={handleConfirmReset}>
               ยืนยันรีเซ็ต
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle> คุณต้องการลบข้อมูลใช่หรือไม่?</DialogTitle>
+            <DialogDescription>
+              คุณต้องการลบข้อมูลใช่หรือไม่?
+              <br />
+              การกระทำนี้ไม่สามารถย้อนกลับได้
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}>
+              ยกเลิก
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              onClick={handleDeleteReset}>
+              ยืนยัน
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -294,11 +333,16 @@ export default function FormAddData() {
         <CardHeader>
           <CardTitle className="text-orange-600">รีเซ็ตค่ารับปริญญา</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex gap-3">
           <Button
             className="bg-orange-600 hover:bg-orange-700 text-white"
             onClick={() => setIsResetDialogOpen(true)}>
             รีเซ็ตค่ารับปริญญา
+          </Button>
+          <Button
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+            onClick={() => setDeleteDialogOpen(true)}>
+            ลบข้อมูลบัณฑิต
           </Button>
         </CardContent>
 

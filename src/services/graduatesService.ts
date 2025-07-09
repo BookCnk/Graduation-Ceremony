@@ -224,3 +224,18 @@ export const CurrentRoundOverview = async (): Promise<any> => {
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
   return await res.json();
 };
+
+export const deleteAllGraduationData = async (): Promise<{
+  status: string;
+  message?: string;
+}> => {
+  const res = await fetch(`${BASE_URL}/delete-all-graduation-data`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) throw new Error("Failed to delete graduation data");
+  return await res.json();
+};
