@@ -21,7 +21,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
   const location = useLocation();
 
-  if (!user && location.pathname !== "/number") {
+  if (
+    !user &&
+    location.pathname !== "/number" &&
+    location.pathname !== "/grad-data"
+  ) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

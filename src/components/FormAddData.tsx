@@ -56,7 +56,7 @@ export default function FormAddData() {
       alert("กรุณากรอกทั้งรหัสคณะและชื่อคณะ");
       return;
     }
-
+    
     try {
       const res: any = await createFaculty({ id, name });
 

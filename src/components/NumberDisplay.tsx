@@ -45,28 +45,25 @@ const DisplayBoard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-between  ">
+    <div className="min-h-screen bg-white flex flex-col justify-between">
       {/* Top Bar */}
-      <div className="bg-orange-600 text-white text-4xl font-bold flex justify-between items-center px-10 py-6 shadow-md">
-        <div className="flex items-center gap-4">
+      <div className="bg-orange-600 text-white flex justify-between items-center px-10 py-10 shadow-md">
+        <div className="flex items-center gap-6">
           <img
             src="https://www.kmutt.ac.th/wp-content/uploads/2020/09/KMUTT_CI_Primary_Logo-Full.png"
             alt="KMUTT Logo"
-            className="h-16 bg-white rounded"
+            className="h-20 bg-white rounded"
           />
-          <span>
+          <span className="text-5xl font-bold">
             รอบที่{" "}
-            <span className="bg-white text-orange-600 px-4 py-1 rounded">
+            <span className="bg-white text-orange-600 px-6 py-2 rounded text-5xl">
               {data.round_number}
             </span>
           </span>
         </div>
-        <div>
-          ยอด{" "}
-          <span className="font-extrabold">
-            {data.total_capacity.toLocaleString()}
-          </span>{" "}
-          คน
+
+        <div className="text-[100px] font-extrabold text-white leading-none text-right">
+          ยอด {data.total_capacity.toLocaleString()} คน
         </div>
       </div>
 
@@ -78,16 +75,16 @@ const DisplayBoard = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="bg-orange-600 text-white text-4xl font-bold flex justify-between items-center px-10 py-6 shadow-inner">
+      <div className="bg-orange-600 text-white text-4xl font-bold flex justify-between items-center px-10 py-10 shadow-inner">
         <div className="flex items-center gap-4">
-          <span>คณะ {data.current_faculty_name}</span>
-          <span className="bg-white text-orange-600 px-6 py-1 rounded">
+          <span>{data.current_faculty_name}</span>
+          <span className="bg-white text-orange-600 px-6 py-2 rounded text-5xl">
             {data.current_faculty_quota.toLocaleString()} คน
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <span>เหลือกำลังรับ</span>
-          <span className="bg-white text-red-600 px-6 py-1 rounded text-4xl font-extrabold">
+          <span className="bg-white text-red-600 px-6 py-2 rounded text-6xl font-extrabold">
             {data.current_faculty_remaining.toLocaleString()}
           </span>
         </div>

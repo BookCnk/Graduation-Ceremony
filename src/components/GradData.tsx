@@ -218,21 +218,21 @@ const GradData = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="flex flex-col justify-between w-full h-full space-y-8">
                   <div>
-                    <label className="block text-3xl text-gray-500 mb-1">
+                    <label className="block text-4xl text-gray-500 mb-2">
                       บัณฑิตรวม
                     </label>
-                    <p className="text-3xl font-medium text-gray-700">
+                    <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
                       {summaryAll?.received ?? "-"}/
                       {summaryAll?.total_graduates ?? "-"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-3xl text-gray-500 mb-1">
+                    <label className="block text-4xl text-gray-500 mb-2">
                       ยอดคงเหลือ
                     </label>
-                    <p className="text-3xl font-medium text-gray-700">
+                    <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
                       {summaryAll?.not_received ?? "-"}
                     </p>
                   </div>
