@@ -21,6 +21,7 @@ import {
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
+
 /* ---------- helpers ---------- */
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(n, max));
@@ -65,10 +66,18 @@ const DraggableFaculty = ({
   maxAllowed: number;
   onValueChange: (id: number, value: number) => void;
 }) => {
+  const [inputValue, setInputValue] = useState(item.value.toString());
+
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform } =
     useDraggable({
       id: `draggable-${groupId}-${item.id}`,
-      data: { item, groupId },
+      data: {
+        item: {
+          ...item,
+          value: Number(inputValue || "0"),
+        },
+        groupId,
+      },
     });
   const stripScale = (t: string) => t.replace(/scale[XY]?\([^)]+\)/g, "");
   const style = {
@@ -84,6 +93,21 @@ const DraggableFaculty = ({
       : {}),
     height: 48,
   } as const;
+
+  useEffect(() => {
+    setInputValue(item.value.toString()); // sync when parent updates
+  }, [item.value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setInputValue(raw);
+
+    const parsed = parseInt(raw, 10);
+    if (!isNaN(parsed)) {
+      const clamped = clamp(parsed, 0, maxAllowed);
+      onValueChange(item.id, clamped);
+    }
+  };
 
   return (
     <div
@@ -101,7 +125,7 @@ const DraggableFaculty = ({
         <span className="text-sm">
           {item.name}{" "}
           <span className="text-xs text-gray-500">
-            [{item.value}/{item.student_count} คน]
+            [{inputValue || 0}/{item.student_count} คน]
           </span>
         </span>
       </div>
@@ -110,10 +134,8 @@ const DraggableFaculty = ({
         type="number"
         min={0}
         max={maxAllowed}
-        value={item.value}
-        onChange={(e) =>
-          onValueChange(item.id, clamp(+e.target.value || 0, 0, maxAllowed))
-        }
+        value={inputValue}
+        onChange={handleChange}
         className="h-10 w-20 text-right bg-yellow-100 border-orange-300"
       />
     </div>
@@ -233,19 +255,29 @@ export const GroupedFacultyInput = () => {
     const id = +idStr;
 
     /* -------- หา item ต้นทางเพื่อตรวจ quota -------- */
-    let sourceItem: FacultyItem | undefined;
-    if (from === "unassigned") {
-      sourceItem = unassigned.find((u) => u.id === id);
-    } else {
-      const g = groups.find((gr) => gr.round === +from);
-      sourceItem = g?.items.find((it) => it.id === id);
+    // let sourceItem: FacultyItem | undefined;
+    // if (from === "unassigned") {
+    //   sourceItem = unassigned.find((u) => u.id === id);
+    // } else {
+    //   const g = groups.find((gr) => gr.round === +from);
+    //   sourceItem = g?.items.find((it) => it.id === id);
+    // }
+
+    const activeData = active.data?.current as {
+      item: FacultyItem;
+      groupId: string;
+    };
+
+    if (!activeData || !activeData.item || activeData.item.value === 0) {
+      alert(`ไม่สามารถย้าย "${activeData?.item?.name ?? "รายการ"}" ยังไม่มีตน`);
+      return;
     }
+
+    const sourceItem = activeData.item;
 
     /* -------- เหลือ 0 → แจ้งเตือนแล้วไม่ให้ลาก -------- */
     if (!sourceItem || sourceItem.value === 0) {
-      alert(
-        `ไม่สามารถย้าย "${sourceItem?.name ?? "รายการ"}" ยังไม่มีตน`
-      );
+      alert(`ไม่สามารถย้าย "${sourceItem?.name ?? "รายการ"}" ยังไม่มีตน`);
       return;
     }
 
@@ -344,6 +376,9 @@ export const GroupedFacultyInput = () => {
     <Card className="bg-white shadow-xl border border-orange-100">
       <CardHeader>
         <CardTitle className="text-orange-600">ตั้งค่ารอบบัณฑิต</CardTitle>
+        <p className="text-sm text-gray-500">
+          * กดปุ่ม "บันทึกข้อมูล" เพื่อบันทึกโควต้าของแต่ละรอบที่จัดเสร็จแล้ว
+        </p>
       </CardHeader>
 
       <CardContent className="space-y-6">

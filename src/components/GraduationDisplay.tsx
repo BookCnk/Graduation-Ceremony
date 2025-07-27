@@ -3,7 +3,6 @@ import {
   getFirstGraduateNotReceived,
   setGraduateAsReceived,
 } from "@/services/graduatesService";
-import { motion, AnimatePresence } from "framer-motion";
 import socket from "@/socket";
 
 interface Graduate {
@@ -110,71 +109,61 @@ export function GraduationDisplay({ onClick }: GraduateProps) {
         </div>
       )}
 
-      <AnimatePresence mode="wait">
-        {graduate && (
-          <motion.div
-            key={graduate.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6 relative z-0">
-            <h2 className="text-2xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
-              ข้อมูลบัณฑิตปัจจุบัน
-            </h2>
+      {graduate && (
+        <div className="space-y-6 relative z-0">
+          <h2 className="text-2xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
+            ข้อมูลบัณฑิตปัจจุบัน
+          </h2>
 
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">
-                ชื่อ-สกุล
-              </label>
-              <p className="text-2xl font-semibold text-gray-900 tracking-wide">
-                {graduate.name}
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">
+              ชื่อ-สกุล
+            </label>
+            <p className="text-2xl font-semibold text-gray-900 tracking-wide">
+              {graduate.name}
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">
-                รอบและลำดับ
-              </label>
-              <p className="text-2xl font-semibold text-orange-700">
-                รอบ {graduate.round} ลำดับที่ {graduate.order}
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">
+              รอบและลำดับ
+            </label>
+            <p className="text-2xl font-semibold text-orange-700">
+              รอบ {graduate.round} ลำดับที่ {graduate.order}
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">
-                สาขา/คณะ
-              </label>
-              <p className="text-xl font-medium text-gray-700">
-                {graduate.faculty}
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">สาขา/คณะ</label>
+            <p className="text-xl font-medium text-gray-700">
+              {graduate.faculty}
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">สาขา</label>
-              <p className="text-xl font-medium text-gray-700">
-                {graduate.degree_level}
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">สาขา</label>
+            <p className="text-xl font-medium text-gray-700">
+              {graduate.degree_level}
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">ปริญญา</label>
-              <p className="text-xl font-medium text-gray-700">
-                {graduate.degree_name}
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">ปริญญา</label>
+            <p className="text-xl font-medium text-gray-700">
+              {graduate.degree_name}
+            </p>
+          </div>
 
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={handleNextGraduate}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
-                เรียกบัณฑิตคนถัดไป (Space)
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={handleNextGraduate}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
+              เรียกบัณฑิตคนถัดไป (Space)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

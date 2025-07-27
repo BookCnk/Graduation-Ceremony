@@ -15,14 +15,22 @@ const DisplayBoard = () => {
   const [data, setData] = useState<DisplayData | null>(null);
 
   useEffect(() => {
-    const onGraduateOverview = (payload: {
-      status: string;
-      data: DisplayData;
-    }) => {
-      if (payload.status === "success") {
-        console.log("📡 DisplayBoard received:", payload.data);
-        setData(payload.data);
-      }
+    const onGraduateOverview = (payload: any) => {
+      console.log(payload);
+
+      const raw: any = payload.data;
+
+      const transformed: DisplayData = {
+        round_number: Number(raw.round_number),
+        total_capacity: Number(raw.total_capacity),
+        remaining_count: Number(raw.remaining_count),
+        current_faculty_name: raw.current_faculty_name,
+        current_faculty_quota: Number(raw.current_faculty_quota),
+        current_faculty_remaining: Number(raw.current_faculty_remaining),
+      };
+
+      setData(transformed);
+      console.log("📡 แปลงข้อมูลแล้ว:", transformed);
     };
 
     socket.on("graduate-overview", onGraduateOverview);
@@ -63,7 +71,7 @@ const DisplayBoard = () => {
         </div>
 
         <div className="text-[100px] font-extrabold text-white leading-none text-right">
-          ยอด {data.total_capacity.toLocaleString()} คน
+          ยอด {Number(data.total_capacity)} คน
         </div>
       </div>
 

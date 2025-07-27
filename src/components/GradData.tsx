@@ -37,6 +37,8 @@ const GradData = () => {
 
   useEffect(() => {
     const handleGraduateSummary = (payload: any) => {
+      console.log(payload);
+
       if (payload.status === "success") {
         const {
           first_graduate,
@@ -44,6 +46,8 @@ const GradData = () => {
           round_summary,
           graduate_summary,
         } = payload.data;
+
+        console.log(payload.data);
 
         if (first_graduate) {
           const {
