@@ -9,8 +9,9 @@ interface SummaryData {
   latest_called_sequence: number | null;
   total_all_rounds: number;
 }
+
 interface Props {
-  isUpdate: number; // เปลี่ยนค่านี้จาก parent เพื่อบังคับรีเฟรช
+  isUpdate: number; // Used to trigger refresh from parent
 }
 
 export function ProgressTracker({ isUpdate }: Props) {
@@ -21,15 +22,20 @@ export function ProgressTracker({ isUpdate }: Props) {
     async function fetchData() {
       try {
         const res = await getRoundCallSummary();
-        if (res.status === "success" && res.data) {
-          setSummary({
-            current_round: res.data.current_round,
-            total_in_round: Number(res.data.total_in_round),
-            already_called: Number(res.data.already_called),
-            remaining: Number(res.data.remaining),
-            latest_called_sequence: res.data.latest_called_sequence,
-            total_all_rounds: Number(res.data.total_all_rounds),
-          });
+        if (res.status === "success") {
+          if (res.data) {
+            setSummary({
+              current_round: res.data.current_round,
+              total_in_round: Number(res.data.total_in_round),
+              already_called: Number(res.data.already_called),
+              remaining: Number(res.data.remaining),
+              latest_called_sequence: res.data.latest_called_sequence,
+              total_all_rounds: Number(res.data.total_all_rounds),
+            });
+          } else {
+            // ✅ When no more round summary (e.g. finished), clear the state
+            setSummary(null);
+          }
         }
       } catch (err) {
         console.error("❌ ไม่สามารถดึงสรุปผลรอบได้:", err);
@@ -37,12 +43,26 @@ export function ProgressTracker({ isUpdate }: Props) {
         setLoading(false);
       }
     }
+
     fetchData();
   }, [isUpdate]);
 
   if (loading)
     return <p className="text-sm text-muted-foreground">กำลังโหลดสถานะ…</p>;
-  if (!summary) return <p className="text-sm text-red-500">ไม่มีข้อมูล</p>;
+
+  // ✅ Display finished state if summary is null
+  if (!summary)
+    return (
+      <div className="text-center space-y-2">
+        <h2 className="text-xl font-semibold mb-1">ความคืบหน้าพิธีมอบปริญญา</h2>
+        <div className="bg-green-100 text-green-700 px-4 py-6 rounded-lg shadow inline-block">
+          <p className="text-2xl font-bold">🎓 เสร็จสิ้นรอบนี้</p>
+          <p className="text-sm mt-1 text-gray-700">
+            บัณฑิตทั้งหมดเข้ารับครบแล้ว
+          </p>
+        </div>
+      </div>
+    );
 
   const percentage = summary.total_in_round
     ? Math.round((summary.already_called / summary.total_in_round) * 100)
@@ -53,7 +73,7 @@ export function ProgressTracker({ isUpdate }: Props) {
       <h2 className="text-xl font-semibold mb-4">ความคืบหน้าพิธีมอบปริญญา</h2>
 
       <div className="space-y-4">
-        {/* แถบ Progress */}
+        {/* Progress Bar */}
         <div>
           <div className="flex justify-between mb-2">
             <span className="text-sm text-muted-foreground">
@@ -69,7 +89,7 @@ export function ProgressTracker({ isUpdate }: Props) {
           </div>
         </div>
 
-        {/* ตัวเลขสรุป */}
+        {/* Summary Numbers */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold">{summary.total_in_round}</p>

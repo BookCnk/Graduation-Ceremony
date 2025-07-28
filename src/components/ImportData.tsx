@@ -12,7 +12,7 @@ const ImportData: React.FC = () => {
     const facultySequenceMap: Record<number, number> = {};
 
     return data
-      .filter((row: any) => row.PARTICIPATION == "1")
+      .filter((row: any) => row.PARTICIPATION === "1")
       .map((row: any, index: number) => {
         const fullName = row.GRADNAMET?.trim() || "";
         const facultyId = parseInt(row.FACULTYCODE || "0");

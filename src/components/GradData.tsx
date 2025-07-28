@@ -83,6 +83,8 @@ const GradData = () => {
             latest_called_sequence: round_summary.latest_called_sequence,
             total_all_rounds: Number(round_summary.total_all_rounds),
           });
+        } else {
+          setSummary(null); 
         }
 
         if (graduate_summary) {
@@ -148,11 +150,7 @@ const GradData = () => {
 
   return (
     <div className="px-4 md:px-8 lg:px-16 py-10">
-      <motion.div
-        className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100 relative"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.1 }}>
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100 relative">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
             <p className="text-orange-600 text-xl animate-pulse">
@@ -161,102 +159,90 @@ const GradData = () => {
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          {graduate && (
-            <motion.div
-              key={graduate.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-6 relative z-0">
-              <h2 className="text-3xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
-                ข้อมูลบัณฑิตปัจจุบัน
-              </h2>
+        {graduate && (
+          <div className="space-y-6 relative z-0">
+            <h2 className="text-3xl font-bold mb-6 text-orange-700 text-center border-b pb-2">
+              ข้อมูลบัณฑิตปัจจุบัน
+            </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-lg text-gray-500 mb-1">
-                      ชื่อ-สกุล
-                    </label>
-                    <p className="text-3xl font-semibold text-gray-900 tracking-wide">
-                      {graduate.name}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-lg text-gray-500 mb-1">
-                      รอบและลำดับ
-                    </label>
-                    <p className="text-3xl font-semibold text-orange-700">
-                      รอบ {graduate.round} ลำดับที่ {graduate.order}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-lg text-gray-500 mb-1">
-                      สาขา/คณะ
-                    </label>
-                    <p className="text-2xl font-medium text-gray-700">
-                      {graduate.faculty}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">
-                      สาขา
-                    </label>
-                    <p className="text-xl font-medium text-gray-700">
-                      {graduate.degree_level}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">
-                      ปริญญา
-                    </label>
-                    <p className="text-xl font-medium text-gray-700">
-                      {graduate.degree_name}
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-lg text-gray-500 mb-1">
+                    ชื่อ-สกุล
+                  </label>
+                  <p className="text-3xl font-semibold text-gray-900 tracking-wide">
+                    {graduate.name}
+                  </p>
                 </div>
 
-                <div className="flex flex-col justify-between w-full h-full space-y-8">
-                  <div>
-                    <label className="block text-4xl text-gray-500 mb-2">
-                      บัณฑิตรวม
-                    </label>
-                    <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
-                      {summaryAll?.received ?? "-"}/
-                      {summaryAll?.total_graduates ?? "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-4xl text-gray-500 mb-2">
-                      ยอดคงเหลือ
-                    </label>
-                    <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
-                      {summaryAll?.not_received ?? "-"}
-                    </p>
-                  </div>
+                <div>
+                  <label className="block text-lg text-gray-500 mb-1">
+                    รอบและลำดับ
+                  </label>
+                  <p className="text-3xl font-semibold text-orange-700">
+                    รอบ {graduate.round} ลำดับที่ {graduate.order}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-lg text-gray-500 mb-1">
+                    สาขา/คณะ
+                  </label>
+                  <p className="text-2xl font-medium text-gray-700">
+                    {graduate.faculty}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">
+                    สาขา
+                  </label>
+                  <p className="text-xl font-medium text-gray-700">
+                    {graduate.degree_level}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">
+                    ปริญญา
+                  </label>
+                  <p className="text-xl font-medium text-gray-700">
+                    {graduate.degree_name}
+                  </p>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+              <div className="flex flex-col justify-between w-full h-full space-y-8">
+                <div>
+                  <label className="block text-4xl text-gray-500 mb-2">
+                    บัณฑิตรวม
+                  </label>
+                  <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
+                    {summaryAll?.received ?? "-"}/
+                    {summaryAll?.total_graduates ?? "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-4xl text-gray-500 mb-2">
+                    ยอดคงเหลือ
+                  </label>
+                  <p className="text-8xl font-extrabold text-gray-900 tracking-tight leading-none">
+                    {summaryAll?.not_received ?? "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!graduate && !loading && (
           <p className="text-red-600 text-xl text-center">ไม่พบข้อมูลบัณฑิต</p>
         )}
-      </motion.div>
+      </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <motion.div
-          className="lg:col-span-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}>
+        <div className="lg:col-span-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
           <h2 className="text-2xl font-semibold mb-4">
             ผู้ที่รอเรียกถัดไป 2 คน
           </h2>
@@ -298,21 +284,17 @@ const GradData = () => {
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}>
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-orange-100">
           <h2 className="text-2xl font-semibold mb-4">
             ความคืบหน้าพิธีมอบปริญญา
           </h2>
+
           {summaryLoading ? (
             <p className="text-base text-muted-foreground">กำลังโหลดสถานะ…</p>
-          ) : !summary ? (
-            <p className="text-base text-red-500">ไม่มีข้อมูล</p>
-          ) : (
+          ) : summary ? (
+            // ✅ Case: มี summary → แสดง progress bar
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between mb-2">
@@ -343,8 +325,30 @@ const GradData = () => {
                 </div>
               </div>
             </div>
+          ) : summaryAll && Number(summaryAll.not_received) === 0 ? (
+            // ✅ Case: ไม่มี summary + เข้ารับครบแล้ว
+            <div className="text-center space-y-2">
+              <p className="text-3xl font-bold text-green-600">🎓 เสร็จสิ้น</p>
+              <p className="text-base text-muted-foreground">
+                บัณฑิตทั้งหมด {summaryAll.total_graduates} คน เข้ารับครบแล้ว
+              </p>
+            </div>
+          ) : summaryAll ? (
+            // ✅ Case: ไม่มี summary แต่ยังเหลืออยู่ → แสดงว่าเสร็จสิ้นรอบแต่ภาพรวมยังไม่จบ
+            <div className="text-center space-y-2">
+              <p className="text-3xl font-bold text-green-600">
+                🎓 เสร็จสิ้นรอบนี้
+              </p>
+              <p className="text-base text-muted-foreground">
+                บัณฑิตทั้งหมด {summaryAll.total_graduates} คน เข้ารับแล้ว{" "}
+                {summaryAll.received} คน
+              </p>
+            </div>
+          ) : (
+            // ❌ ไม่มีอะไรเลย
+            <p className="text-base text-red-500">ไม่มีข้อมูล</p>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

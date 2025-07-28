@@ -49,7 +49,7 @@ const Login = () => {
             </div>
             <div className="text-left">
               <h1 className="text-2xl font-semibold text-gray-700 mb-1">
-                พิธีพระราชทานปริญญาบัตร ประจำปีการศึกษา 2565
+                พิธีพระราชทานปริญญาบัตร ประจำปีการศึกษา 2568
               </h1>
               <h2 className="text-3xl bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
                 Graduation Ceremony
@@ -126,7 +126,7 @@ const Login = () => {
 
         {/* Footer */}
         <div className="text-center mt-12 text-gray-500 text-sm">
-          <p>© 2024 King Mongkut's University of Technology Thonburi</p>
+          <p>© 2024 King Mongkut's University of Technology Thonburi By Chanakarn Kruehong</p>
         </div>
       </div>
     </div>

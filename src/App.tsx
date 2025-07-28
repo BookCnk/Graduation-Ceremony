@@ -166,7 +166,10 @@ function App() {
               </main>
 
               <footer className="text-center py-6 text-gray-500 text-sm">
-                <p>© 2024 King Mongkut's University of Technology Thonburi</p>
+                <p>
+                  © 2024 King Mongkut's University of Technology Thonburi By
+                  Chanakarn Kruehong
+                </p>
               </footer>
             </div>
           </ProtectedRoute>
