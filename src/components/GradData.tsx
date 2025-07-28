@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
   useReactTable,
@@ -84,7 +83,7 @@ const GradData = () => {
             total_all_rounds: Number(round_summary.total_all_rounds),
           });
         } else {
-          setSummary(null); 
+          setSummary(null);
         }
 
         if (graduate_summary) {
