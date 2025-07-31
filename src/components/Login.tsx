@@ -12,7 +12,7 @@ import {
 import { GraduationCap } from "lucide-react";
 import { login } from "@/services/api";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore"; 
+import { useAuthStore } from "@/stores/authStore";
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +31,11 @@ const Login = () => {
     if (res.status === "success" && res.data?.token) {
       const token = res.data.token;
       setToken(token);
-      const redirectTo = (location.state as any)?.from?.pathname || "/";
+      const basename = "/gradkmutt";
+      let redirectTo = (location.state as any)?.from?.pathname || "/";
+      if (redirectTo.startsWith(basename)) {
+        redirectTo = redirectTo.slice(basename.length) || "/";
+      }
       navigate(redirectTo, { replace: true }); // ✅ กลับไปยังหน้าก่อน login
     } else {
       setErrorMsg(res.message || "เข้าสู่ระบบไม่สำเร็จ");
@@ -126,7 +130,10 @@ const Login = () => {
 
         {/* Footer */}
         <div className="text-center mt-12 text-gray-500 text-sm">
-          <p>© 2024 King Mongkut's University of Technology Thonburi By Chanakarn Kruehong</p>
+          <p>
+            © 2024 King Mongkut's University of Technology Thonburi By Chanakarn
+            Kruehong
+          </p>
         </div>
       </div>
     </div>
