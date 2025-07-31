@@ -21,8 +21,9 @@ RUN rm /etc/nginx/conf.d/default.conf
 # ✅ Copy config ที่รองรับ path /gradkmutt/
 COPY nginx.conf /etc/nginx/conf.d/gradkmutt.conf
 
-# ✅ Copy ไฟล์ build เข้า public folder ของ nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+# ✅ สร้างโฟลเดอร์ /gradkmutt แล้ว copy build เข้าไป
+RUN mkdir -p /usr/share/nginx/html/gradkmutt
+COPY --from=builder /app/dist/ /usr/share/nginx/html/gradkmutt/
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
