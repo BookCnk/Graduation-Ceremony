@@ -23,12 +23,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (
     !user &&
-    location.pathname !== "/gradkmutt/number" &&
-    location.pathname !== "/gradkmutt/grad-data"
+    location.pathname !== "/number" &&
+    location.pathname !== "/grad-data"
   ) {
-    return (
-      <Navigate to="/gradkmutt/login" state={{ from: location }} replace />
-    );
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -76,9 +74,9 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/gradkmutt/login" element={<Login />} />
-      <Route path="/gradkmutt/number" element={<NumberDisplay />} />
-      <Route path="/gradkmutt/grad-data" element={<GradData />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/number" element={<NumberDisplay />} />
+      <Route path="/grad-data" element={<GradData />} />
 
       <Route
         path="/*"
