@@ -74,9 +74,7 @@ function App() {
 
   return (
     <Routes>
-      {/* Root path redirect to login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      
+
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/number" element={<NumberDisplay />} />
