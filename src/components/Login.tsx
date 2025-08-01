@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { GraduationCap } from "lucide-react";
 import { login } from "@/services/api";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -20,7 +20,6 @@ const Login = () => {
 
   const setToken = useAuthStore((state) => state.setToken);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +30,9 @@ const Login = () => {
     if (res.status === "success" && res.data?.token) {
       const token = res.data.token;
       setToken(token);
-      const basename = "/gradkmutt";
-      let redirectTo = (location.state as any)?.from?.pathname || "/";
-      if (redirectTo.startsWith(basename)) {
-        redirectTo = redirectTo.slice(basename.length) || "/";
-      }
-      navigate(redirectTo, { replace: true }); // ✅ กลับไปยังหน้าก่อน login
+
+      // แค่ navigate ไป "/" ซึ่งจะเป็น /gradkmutt/ เพราะมี basename
+      navigate("/", { replace: true });
     } else {
       setErrorMsg(res.message || "เข้าสู่ระบบไม่สำเร็จ");
     }
