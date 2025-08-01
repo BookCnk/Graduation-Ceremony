@@ -74,10 +74,15 @@ function App() {
 
   return (
     <Routes>
+      {/* Root path redirect to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      
+      {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/number" element={<NumberDisplay />} />
       <Route path="/grad-data" element={<GradData />} />
 
+      {/* Protected routes */}
       <Route
         path="/*"
         element={
@@ -175,6 +180,8 @@ function App() {
           </ProtectedRoute>
         }
       />
+      {/* Catch all other routes and redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
