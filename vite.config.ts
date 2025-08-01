@@ -9,7 +9,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"), // 👉 ให้ @ ชี้ไปยัง src
     },
   },
-  server: {
-    open: "/login", // 👉 เปิดหน้า login โดยอัตโนมัติ
-  },
 });
