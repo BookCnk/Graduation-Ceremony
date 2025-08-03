@@ -1,6 +1,9 @@
 // frontend/src/socket.ts
 import { io } from "socket.io-client";
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3002";
+const SOCKET_URL = "http://10.2.15.114:3002";
+// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3002";
+console.log(SOCKET_URL);
+
 
 const socket = io(SOCKET_URL, {
   transports: ["websocket"], // ไม่ใช้ polling
